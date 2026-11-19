@@ -17,7 +17,7 @@ The work follows the team build plan (`OCSVR_Training_Plan.md` section 5 in the 
 | 1. Laptop workbench + one snap task | **Done:** drag the RAM stick into the RAM slot with the mouse |
 | 2. One full mission ("Identify components") with hints and a success panel | **Done:** CPU, RAM, SSD and keyboard into their places, checklist and hints on a 3D panel, score/time/attempts on success |
 | 4. `TrainingManager` autoload + module registry | **Done:** missions are data in `data/modules.json`; one generic mission script |
-| Module 1 missions | **4 of 5:** Install the RAM (practice), Identify the components, Assemble the system, Execute a task. Left: the two advanced ones (CPU vs GPU, diagnose a failure) |
+| Module 1 missions | **All 5, plus a practice:** Install the RAM (practice), Identify the components, Assemble the system, Execute a task, Add processing capacity, Diagnose a failure |
 | 5. Send scores to Flask | **Done:** each finished mission is saved through the training API (sign in, start a session, complete it with retries) |
 | OpenXR, Quest export preset, vendors plugin | Being set up by Aryan's side; they get added here |
 
@@ -36,6 +36,8 @@ The work follows the team build plan (`OCSVR_Training_Plan.md` section 5 in the 
 | `scripts/ui/info_panel.gd` | A 3D panel (SubViewport on a quad) for intros, checklists, hints and results |
 | `scenes/build_computer/assemble_system.tscn` | Module 1, mission 3: mount the motherboard, PSU and SSD in a case, power last |
 | `scenes/build_computer/execute_task.tscn` | Module 1, mission 4: carry a photo file from the SSD to RAM, the CPU, then the screen |
+| `scenes/build_computer/add_capacity.tscn` | Module 1, mission 5 (advanced): install a GPU, then send step-by-step jobs to the CPU and parallel jobs to the GPU |
+| `scenes/build_computer/diagnose_failure.tscn` | Module 1, mission 6 (advanced): read the symptoms, find the broken RAM, then the dead SSD, and swap in spares |
 | `scenes/workbench.tscn` | The "Install the RAM" practice mission (step 1's workbench, now registry-only) |
 | `scripts/grabbable_part.gd` | A part you can pick up. Knows its `part_type`; on a drop it picks the one slot that judges it (so a keyboard over three slots is one mistake, not three); goes home if not installed |
 | `scripts/snap_zone.gd` | A slot (`Area3D`) with a `hint`. It judges a dropped part: right type → installs it and emits `snapped`; wrong type → emits `rejected` |
@@ -80,6 +82,10 @@ Never commit a password. With no account set up, the game still plays, and the s
    - `role`: what the part does, shown when it's installed
    - `requires`: other slots that must be filled first (a part dropped too early is a mistake, and the panel says what comes first)
    - `pass_through: true`: the part is placed here but stays free to move on, so it can go through several stages, like data moving through the computer
+   - `capacity`: how many parts fill it (a job queue); they sit side by side along the SnapPoint's x axis
+   - `working: true`: a part that isn't broken. It takes nothing (so no `accepts`), isn't on the checklist, and turns any part away with its hint
+
+   A zone with a child node named `Replaced` (the old part's mesh) hides it once the zone is full.
 
    Missions play in the order they're listed.
 

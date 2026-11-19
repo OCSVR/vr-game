@@ -12,6 +12,8 @@ const Workbench := preload("res://scenes/workbench.tscn")
 const IdentifyComponents := preload("res://scenes/build_computer/identify_components.tscn")
 const AssembleSystem := preload("res://scenes/build_computer/assemble_system.tscn")
 const ExecuteTask := preload("res://scenes/build_computer/execute_task.tscn")
+const AddCapacity := preload("res://scenes/build_computer/add_capacity.tscn")
+const DiagnoseFailure := preload("res://scenes/build_computer/diagnose_failure.tscn")
 const GrabbablePart := preload("res://scripts/grabbable_part.gd")
 const ModuleRegistry := preload("res://scripts/module_registry.gd")
 const TrainingManagerScript := preload("res://scripts/training_manager.gd")
@@ -44,7 +46,8 @@ func _run() -> void:
 		_test_scoring_is_data, _test_scene_registry_mismatch_is_reported,
 		_test_registry_checks_requires, _test_next_mission_order,
 		_test_assemble_power_goes_last, _test_assemble_perfect_run,
-		_test_execute_task_data_flow,
+		_test_execute_task_data_flow, _test_registry_checks_capacity_and_working,
+		_test_add_capacity_routes_jobs, _test_diagnose_failure,
 	]:
 		manager.use_registry(ModuleRegistry.load_from())
 		manager.now_ms = Time.get_ticks_msec
@@ -114,9 +117,10 @@ func _place(scene: Node3D, part_name: String, to: Vector3) -> void:
 func _test_registry_loads() -> void:
 	var registry = ModuleRegistry.load_from()
 	check("data/modules.json loads with no problems", registry.errors.is_empty(), "; ".join(registry.errors))
-	check("it lists the four Build a Computer missions in order",
+	check("it lists the six Build a Computer missions in order",
 		registry.modules.size() == 1 and registry.modules[0].mission_ids == ["build_computer.install_ram",
-			"build_computer.identify_components", "build_computer.assemble_system", "build_computer.execute_task"],
+			"build_computer.identify_components", "build_computer.assemble_system", "build_computer.execute_task",
+			"build_computer.add_capacity", "build_computer.diagnose_failure"],
 		str(registry.modules))
 	check("a mission keeps its module title and full id",
 		registry.mission("build_computer.identify_components").get("module_title") == "Build a Computer")
@@ -141,7 +145,7 @@ func _test_registry_catches_mistakes() -> void:
 	errors = _bad(func(m): m.id = "install_ram")
 	check("a mission id used twice is caught", errors.size() == 1 and "used twice" in errors[0], str(errors))
 	errors = _bad(func(m): m.slots["Extra"] = {"accepts": "cpu", "name": "2nd socket", "hint": "x"})
-	check("two cpu slots with one CPU is caught (it could never finish)", errors.size() == 1 and '2 slots accept "cpu"' in errors[0], str(errors))
+	check("two cpu slots with one CPU is caught (it could never finish)", errors.size() == 1 and 'slots need 2 "cpu" part(s)' in errors[0], str(errors))
 	errors = _bad(func(m): m.intro = [])
 	check("an empty intro is caught", errors.size() == 1 and ".intro" in errors[0], str(errors))
 
@@ -365,7 +369,7 @@ func _test_next_mission_order() -> void:
 	check("missions chain in registry order",
 		manager.next_mission_id("build_computer.install_ram") == "build_computer.identify_components"
 			and manager.next_mission_id("build_computer.assemble_system") == "build_computer.execute_task")
-	check("the module's last mission has no next one", manager.next_mission_id("build_computer.execute_task") == "")
+	check("the module's last mission has no next one", manager.next_mission_id("build_computer.diagnose_failure") == "")
 
 
 func _test_assemble_power_goes_last() -> void:
@@ -374,9 +378,9 @@ func _test_assemble_power_goes_last() -> void:
 	check("power before the parts is blocked: a mistake, cable goes home",
 		manager.mistakes == 1 and not mission.get_node("PowerCable").is_installed, str(manager.mistakes))
 	check("the panel says what has to come first",
-		"Not yet: the power socket needs the motherboard tray and the PSU bay and the drive bay first." in mission.panel.text(), mission.panel.text())
+		"Not yet. First finish: motherboard tray, PSU bay, drive bay." in mission.panel.text(), mission.panel.text())
 	check("and the checklist marks the socket as waiting",
-		"[  ] power socket  (after the motherboard tray and the PSU bay and the drive bay)" in mission.panel.text(), mission.panel.text())
+		"[  ] power socket  (after: motherboard tray, PSU bay, drive bay)" in mission.panel.text(), mission.panel.text())
 
 
 func _test_assemble_perfect_run() -> void:
@@ -404,7 +408,7 @@ func _test_execute_task_data_flow() -> void:
 	var photo: GrabbablePart = mission.get_node("PhotoFile")
 	await _place(mission, "PhotoFile", _above(mission, "CpuStage"))
 	check("straight from storage to the CPU is blocked (data goes to RAM first)",
-		manager.mistakes == 1 and "needs the memory (RAM) first" in mission.panel.text(), mission.panel.text())
+		manager.mistakes == 1 and "First finish: memory (RAM)." in mission.panel.text(), mission.panel.text())
 	await _place(mission, "PhotoFile", _above(mission, "MemoryStage"))
 	var ram_snap: Vector3 = mission.get_node("MemoryStage/SnapPoint").global_position
 	check("into memory: the photo sits on the RAM and stays free to move on",
@@ -418,3 +422,61 @@ func _test_execute_task_data_flow() -> void:
 	manager.module_completed.disconnect(on_done)
 	check("RAM, then CPU, then screen completes it: score 80, 45 s, 3 attempts",
 		results == [[80, 45, 3]] and photo.is_installed, str(results))
+
+
+# ---- Module 1 advanced missions: capacity and working slots ----
+
+func _test_registry_checks_capacity_and_working() -> void:
+	var errors := _bad(func(m): m.slots["UsbPad"]["capacity"] = 2)
+	check("a slot needing 2 parts when only 1 has the type is caught", errors.size() == 1 and 'slots need 2 "input"' in errors[0], str(errors))
+	errors = _bad(func(m): m.slots["UsbPad"]["capacity"] = 0)
+	check("capacity 0 is caught", errors.size() >= 1 and "capacity" in errors[0], str(errors))
+	errors = _bad(func(m): m.slots["Extra"] = {"working": true, "name": "fan", "hint": "The fan is fine."})
+	check("a working slot needs no accepts and no part", errors.is_empty(), str(errors))
+	errors = _bad(func(m): m.slots["Extra"] = {"working": "yes", "name": "fan", "hint": "x"})
+	check("working that isn't true/false is caught", errors.size() >= 1, str(errors))
+
+
+func _test_add_capacity_routes_jobs() -> void:
+	var mission := await _fresh(AddCapacity)
+	manager.now_ms = _clock([0, 90000])
+	var results := []
+	var on_done := func(id, score, secs): results.append([score, secs, manager.attempts])
+	manager.module_completed.connect(on_done)
+	await _place(mission, "Pixels", _above(mission, "GpuJobs"))
+	check("a GPU job before the GPU is installed is blocked",
+		manager.mistakes == 1 and "First finish: graphics card slot." in mission.panel.text(), mission.panel.text())
+	await _place(mission, "Gpu", _above(mission, "GpuSlot"))
+	await _place(mission, "Pixels", _above(mission, "CpuJobs"))
+	check("a parallel job on the CPU is turned away with the CPU's hint",
+		manager.mistakes == 2 and "The CPU has a few very fast cores" in mission.panel.text(), mission.panel.text())
+	await _place(mission, "GameRules", _above(mission, "CpuJobs"))
+	check("one of two CPU jobs: the checklist counts it", "[  ] CPU jobs (1 of 2)" in mission.panel.text(), mission.panel.text())
+	await _place(mission, "Password", _above(mission, "CpuJobs"))
+	var a: Vector3 = mission.get_node("GameRules").global_position
+	var b: Vector3 = mission.get_node("Password").global_position
+	check("two jobs in one queue sit side by side, 5 cm apart", is_equal_approx(a.distance_to(b), 0.05), str(a.distance_to(b)))
+	await _place(mission, "Pixels", _above(mission, "GpuJobs"))
+	await _place(mission, "TrainAi", _above(mission, "GpuJobs"))
+	manager.module_completed.disconnect(on_done)
+	check("all jobs routed: done with 2 mistakes, score 80, 90 s", results == [[80, 90, 3]], str(results))
+
+
+func _test_diagnose_failure() -> void:
+	var mission := await _fresh(DiagnoseFailure)
+	check("only the two problems are goals; the working CPU and PSU aren't",
+		mission.goals.size() == 2 and mission.zones.size() == 4)
+	check("the checklist lists the symptoms, problem 2 waiting on problem 1",
+		"four things" not in mission.panel.text() and "beeps and shows no picture" in mission.panel.text(), mission.panel.text())
+	await _place(mission, "Cpu", _above(mission, "CpuCheck"))
+	check("a spare dropped on a working part is a mistake that explains why it's fine",
+		manager.mistakes == 1 and "Not that one. The CPU is fine" in mission.panel.text() and not mission.get_node("Cpu").is_installed, mission.panel.text())
+	await _place(mission, "Ssd", _above(mission, "DriveProblem"))
+	check("fixing problem 2 before problem 1 is blocked", manager.mistakes == 2, mission.panel.text())
+	var old_ram: Node3D = mission.get_node("RamProblem/Replaced")
+	await _place(mission, "Ram", _above(mission, "RamProblem"))
+	check("the new RAM fixes problem 1, hides the old stick, and reveals problem 2",
+		mission.get_node("Ram").is_installed and not old_ram.visible and "No boot device found" in mission.panel.text(), mission.panel.text())
+	await _place(mission, "Ssd", _above(mission, "DriveProblem"))
+	check("the new SSD fixes problem 2 and finishes the mission",
+		manager.state == manager.State.SUCCESS and not mission.get_node("DriveProblem/Replaced").visible and manager.score == 80, str(manager.score))

@@ -16,7 +16,10 @@ const InfoPanel := preload("res://scripts/ui/info_panel.gd")
 @export var mission_id: String = ""
 
 var config: Dictionary = {}
+## Every slot in the mission, and the ones that must be filled to finish it
+## (all but `working` slots, which only turn parts away with a hint).
 var zones: Array[SnapZone] = []
+var goals: Array[SnapZone] = []
 var parts: Array[GrabbablePart] = []
 ## Where the mission's problems go (also printed as errors), for tests.
 var problems: PackedStringArray = []
@@ -68,12 +71,16 @@ func _apply_registry() -> void:
 			_problem('slot "%s" isn\'t a SnapZone in %s' % [path, scene_file_path])
 			continue
 		var slot: Dictionary = config.slots[path]
-		zone.accepts = StringName(slot.accepts)
+		zone.accepts = StringName(slot.get("accepts", ""))
 		zone.display_name = slot.name
 		zone.hint = slot.hint
 		zone.role = slot.get("role", "")
 		zone.pass_through = slot.get("pass_through", false)
+		zone.capacity = int(slot.get("capacity", 1))
+		zone.working = slot.get("working", false)
 		zones.append(zone)
+		if not zone.working:
+			goals.append(zone)
 	# Prerequisites are other slots of this mission, so link them once all exist.
 	for path in config.slots:
 		var zone := get_node_or_null(path) as SnapZone
@@ -100,20 +107,24 @@ func _on_part_grabbed(_part: GrabbablePart) -> void:
 func _on_snapped(zone: SnapZone, part: GrabbablePart) -> void:
 	if manager.state != manager.State.ACTIVE:
 		return
-	if zones.all(func(z: SnapZone) -> bool: return z.is_filled()):
+	if goals.all(func(z: SnapZone) -> bool: return z.is_filled()):
 		manager.complete()
 	elif zone.pass_through:
 		_show_checklist(zone.role if zone.role != "" else "Yes! On to the next step.")
+	elif zone.role != "":
+		_show_checklist("Yes! " + zone.role)
 	else:
-		var yes := "Yes! The %s goes in the %s." % [part.display_name, zone.display_name]
-		_show_checklist(yes + (" " + zone.role if zone.role != "" else ""))
+		_show_checklist("Yes! The %s goes in the %s." % [part.display_name, zone.display_name])
 
 
 func _on_rejected(zone: SnapZone, part: GrabbablePart) -> void:
 	if manager.state != manager.State.ACTIVE:
 		return
 	manager.note_mistake()
-	_show_checklist("The %s doesn't go there. %s" % [part.display_name, zone.hint])
+	if zone.working:
+		_show_checklist("Not that one. " + zone.hint)
+	else:
+		_show_checklist("The %s doesn't go there. %s" % [part.display_name, zone.hint])
 
 
 func _on_blocked(zone: SnapZone, part: GrabbablePart) -> void:
@@ -121,7 +132,7 @@ func _on_blocked(zone: SnapZone, part: GrabbablePart) -> void:
 		return
 	manager.note_mistake()
 	var first := zone.missing_prerequisites().map(func(z) -> String: return z.display_name)
-	_show_checklist("Not yet: the %s needs the %s first. %s" % [zone.display_name, " and the ".join(first), zone.hint])
+	_show_checklist("Not yet. First finish: %s. %s" % [", ".join(first), zone.hint])
 
 
 func _on_module_completed(_module_id: String, score: int, duration_s: int) -> void:
@@ -160,10 +171,12 @@ func _show_result() -> void:
 ## A slot still waiting on another says so.
 func _show_checklist(feedback: String) -> void:
 	var out := PackedStringArray()
-	for zone in zones:
+	for zone in goals:
 		var line := ("[x] " if zone.is_filled() else "[  ] ") + zone.display_name
+		if zone.capacity > 1:
+			line += " (%d of %d)" % [zone.installed_parts.size(), zone.capacity]
 		if not zone.is_filled() and not zone.is_unlocked():
-			line += "  (after the %s)" % " and the ".join(zone.missing_prerequisites().map(func(z) -> String: return z.display_name))
+			line += "  (after: %s)" % ", ".join(zone.missing_prerequisites().map(func(z) -> String: return z.display_name))
 		out.append(line)
 	if feedback != "":
 		out.append("")
