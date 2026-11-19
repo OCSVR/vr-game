@@ -7,10 +7,14 @@ extends RigidBody3D
 ## stick), so a SnapZone can place it by matching transforms.
 ##
 ## The part never knows what is moving it. A grabber (mouse now, controllers or
-## hands later) calls grab(), moves the part, then calls drop(). SnapZones listen
-## for `dropped` and decide whether the part belongs to them.
+## hands later) calls grab(), moves the part, then calls drop().
+##
+## SnapZones tell the part when it is over them. On drop() the part asks one
+## zone to judge it: a zone that takes this type, if it's over one, otherwise
+## the nearest zone (which turns it away). One drop is one decision, even when
+## a big part like a keyboard covers several slots at once.
 
-## Emitted by drop(). SnapZones under the part connect to it.
+## Emitted by drop(), before a zone judges the part.
 signal dropped(part)
 ## Emitted when a SnapZone accepts the part.
 signal installed(part, zone)
@@ -24,6 +28,8 @@ var is_held := false
 var is_installed := false
 ## Where the part goes back to when it's dropped somewhere that isn't its slot.
 var home_transform: Transform3D
+## SnapZones the part is over right now (they add and remove themselves).
+var zones_under: Array[Area3D] = []
 
 
 func _ready() -> void:
@@ -52,8 +58,27 @@ func drop() -> void:
 		return
 	is_held = false
 	dropped.emit(self)
+	var zone := zone_for_drop()
+	if zone:
+		zone.judge(self)
 	if not is_installed:
 		return_home()
+
+
+## The one zone that decides about this drop, or null when over none:
+## the nearest zone that takes this part, else the nearest zone at all.
+func zone_for_drop() -> Area3D:
+	var taking := zones_under.filter(func(z) -> bool: return z.can_take(self))
+	var pool := taking if not taking.is_empty() else zones_under
+	var best: Area3D = null
+	for zone in pool:
+		if best == null or _distance_to(zone) < _distance_to(best):
+			best = zone
+	return best
+
+
+func _distance_to(zone: Area3D) -> float:
+	return global_position.distance_to(zone.snap_transform().origin)
 
 
 func return_home() -> void:

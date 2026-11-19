@@ -2,9 +2,10 @@ extends Area3D
 ## A place a part goes: a RAM slot, a CPU socket, a switch port.
 ##
 ## Mr. Mortensen's plan: one reusable SnapZone handles drop detection, and
-## "that's your whole task system". When a part is dropped while it overlaps
-## this zone, the zone either installs it (right type) or turns it away (wrong
-## type, which counts as a failed attempt). Missions only listen to the signals.
+## "that's your whole task system". The zone tells a part when it is over it;
+## when the part is dropped, the zone it picks judges it: right type and empty,
+## it's installed (`snapped`); wrong type, it's turned away (`rejected`, a failed
+## attempt). Missions only listen to the signals.
 
 const GrabbablePart := preload("res://scripts/grabbable_part.gd")
 
@@ -17,6 +18,9 @@ signal rejected(zone, part)
 @export var accepts: StringName = &"ram"
 ## What the zone is called in hints, e.g. "RAM slot".
 @export var display_name: String = "RAM slot"
+## One sentence on what goes here and why, shown after a wrong drop,
+## e.g. "Memory goes here: it holds what the CPU is working on right now."
+@export_multiline var hint: String = ""
 
 var installed_part: GrabbablePart = null
 
@@ -38,24 +42,32 @@ func snap_transform() -> Transform3D:
 	return _snap_point.global_transform if _snap_point else global_transform
 
 
+## True when this zone would install the part right now.
+func can_take(part: GrabbablePart) -> bool:
+	return not is_filled() and part.part_type == accepts
+
+
+## Decides about a part dropped on this zone: install it, turn it away, or (a
+## part of the right type over a slot that's already full) do nothing, so it
+## just goes home without counting as a mistake.
+func judge(part: GrabbablePart) -> void:
+	if part.is_installed:
+		return
+	if can_take(part):
+		installed_part = part
+		part.install(self, snap_transform())
+		snapped.emit(self, part)
+	elif part.part_type != accepts:
+		rejected.emit(self, part)
+
+
 func _on_body_entered(body: Node) -> void:
 	var part := body as GrabbablePart
-	if part and not part.dropped.is_connected(_on_part_dropped):
-		part.dropped.connect(_on_part_dropped)
+	if part and not part.zones_under.has(self):
+		part.zones_under.append(self)
 
 
 func _on_body_exited(body: Node) -> void:
 	var part := body as GrabbablePart
-	if part and part.dropped.is_connected(_on_part_dropped):
-		part.dropped.disconnect(_on_part_dropped)
-
-
-func _on_part_dropped(part: GrabbablePart) -> void:
-	if part.is_installed or is_filled():
-		return
-	if part.part_type == accepts:
-		installed_part = part
-		part.install(self, snap_transform())
-		snapped.emit(self, part)
-	else:
-		rejected.emit(self, part)
+	if part:
+		part.zones_under.erase(self)

@@ -1,0 +1,282 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/missions/identify_components.gd" id="1_mission"]
+[ext_resource type="PackedScene" path="res://scenes/room.tscn" id="2_room"]
+[ext_resource type="Script" path="res://scripts/grabbable_part.gd" id="3_part"]
+[ext_resource type="Script" path="res://scripts/snap_zone.gd" id="4_zone"]
+[ext_resource type="Script" path="res://scripts/ui/info_panel.gd" id="5_panel"]
+
+[sub_resource type="StandardMaterial3D" id="Mat_board"]
+albedo_color = Color(0.1, 0.35, 0.2, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_board"]
+material = SubResource("Mat_board")
+size = Vector3(0.305, 0.004, 0.244)
+
+[sub_resource type="BoxShape3D" id="Shape_board"]
+size = Vector3(0.305, 0.004, 0.244)
+
+[sub_resource type="StandardMaterial3D" id="Mat_slot_CpuSocket"]
+albedo_color = Color(0.55, 0.55, 0.58, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_slot_CpuSocket"]
+material = SubResource("Mat_slot_CpuSocket")
+size = Vector3(0.045, 0.004, 0.045)
+
+[sub_resource type="BoxShape3D" id="Shape_zone_CpuSocket"]
+size = Vector3(0.08, 0.12, 0.08)
+
+[sub_resource type="StandardMaterial3D" id="Mat_slot_RamSlot"]
+albedo_color = Color(0.08, 0.08, 0.09, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_slot_RamSlot"]
+material = SubResource("Mat_slot_RamSlot")
+size = Vector3(0.145, 0.008, 0.008)
+
+[sub_resource type="BoxShape3D" id="Shape_zone_RamSlot"]
+size = Vector3(0.17, 0.12, 0.06)
+
+[sub_resource type="StandardMaterial3D" id="Mat_slot_M2Slot"]
+albedo_color = Color(0.08, 0.08, 0.09, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_slot_M2Slot"]
+material = SubResource("Mat_slot_M2Slot")
+size = Vector3(0.024, 0.003, 0.082)
+
+[sub_resource type="BoxShape3D" id="Shape_zone_M2Slot"]
+size = Vector3(0.06, 0.12, 0.11)
+
+[sub_resource type="StandardMaterial3D" id="Mat_slot_UsbPad"]
+albedo_color = Color(0.15, 0.22, 0.4, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_slot_UsbPad"]
+material = SubResource("Mat_slot_UsbPad")
+size = Vector3(0.32, 0.002, 0.13)
+
+[sub_resource type="BoxShape3D" id="Shape_zone_UsbPad"]
+size = Vector3(0.34, 0.12, 0.15)
+
+[sub_resource type="StandardMaterial3D" id="Mat_part_Cpu"]
+albedo_color = Color(0.78, 0.78, 0.8, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_part_Cpu"]
+material = SubResource("Mat_part_Cpu")
+size = Vector3(0.0375, 0.004, 0.0375)
+
+[sub_resource type="BoxShape3D" id="Shape_part_Cpu"]
+size = Vector3(0.0375, 0.012, 0.0375)
+
+[sub_resource type="StandardMaterial3D" id="Mat_part_Ram"]
+albedo_color = Color(0.2, 0.45, 0.85, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_part_Ram"]
+material = SubResource("Mat_part_Ram")
+size = Vector3(0.133, 0.031, 0.004)
+
+[sub_resource type="BoxShape3D" id="Shape_part_Ram"]
+size = Vector3(0.133, 0.031, 0.012)
+
+[sub_resource type="StandardMaterial3D" id="Mat_part_Ssd"]
+albedo_color = Color(0.15, 0.15, 0.18, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_part_Ssd"]
+material = SubResource("Mat_part_Ssd")
+size = Vector3(0.022, 0.003, 0.08)
+
+[sub_resource type="BoxShape3D" id="Shape_part_Ssd"]
+size = Vector3(0.022, 0.01, 0.08)
+
+[sub_resource type="StandardMaterial3D" id="Mat_part_Keyboard"]
+albedo_color = Color(0.22, 0.22, 0.25, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_part_Keyboard"]
+material = SubResource("Mat_part_Keyboard")
+size = Vector3(0.3, 0.02, 0.1)
+
+[sub_resource type="BoxShape3D" id="Shape_part_Keyboard"]
+size = Vector3(0.3, 0.02, 0.1)
+
+[node name="IdentifyComponents" type="Node3D"]
+script = ExtResource("1_mission")
+
+[node name="Room" parent="." instance=ExtResource("2_room")]
+
+[node name="Motherboard" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.902, -0.05)
+
+[node name="Mesh" type="MeshInstance3D" parent="Motherboard"]
+mesh = SubResource("Mesh_board")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Motherboard"]
+shape = SubResource("Shape_board")
+
+[node name="CpuSocket" type="Area3D" parent="Motherboard"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.06, 0.002, -0.03)
+script = ExtResource("4_zone")
+accepts = &"cpu"
+display_name = "CPU socket"
+hint = "The square socket is for the processor (CPU): it runs every instruction."
+
+[node name="Mesh" type="MeshInstance3D" parent="Motherboard/CpuSocket"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.002, 0)
+mesh = SubResource("Mesh_slot_CpuSocket")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Motherboard/CpuSocket"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.06, 0)
+shape = SubResource("Shape_zone_CpuSocket")
+
+[node name="SnapPoint" type="Marker3D" parent="Motherboard/CpuSocket"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.004, 0)
+
+[node name="RamSlot" type="Area3D" parent="Motherboard"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.07, 0.002, -0.03)
+script = ExtResource("4_zone")
+accepts = &"ram"
+display_name = "RAM slot"
+hint = "The long slot is for memory (RAM): it holds what the CPU is working on right now."
+
+[node name="Mesh" type="MeshInstance3D" parent="Motherboard/RamSlot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.004, 0)
+mesh = SubResource("Mesh_slot_RamSlot")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Motherboard/RamSlot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.06, 0)
+shape = SubResource("Shape_zone_RamSlot")
+
+[node name="SnapPoint" type="Marker3D" parent="Motherboard/RamSlot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.004, 0)
+
+[node name="M2Slot" type="Area3D" parent="Motherboard"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0, 0.002, 0.07)
+script = ExtResource("4_zone")
+accepts = &"storage"
+display_name = "M.2 storage slot"
+hint = "The flat M.2 slot is for storage (the SSD): it keeps files and programs even when the power is off."
+
+[node name="Mesh" type="MeshInstance3D" parent="Motherboard/M2Slot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0015, 0)
+mesh = SubResource("Mesh_slot_M2Slot")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Motherboard/M2Slot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.06, 0)
+shape = SubResource("Shape_zone_M2Slot")
+
+[node name="SnapPoint" type="Marker3D" parent="Motherboard/M2Slot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.003, 0)
+
+[node name="UsbPad" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.38, 0.9, -0.05)
+script = ExtResource("4_zone")
+accepts = &"input"
+display_name = "keyboard spot (USB port)"
+hint = "The USB spot is for input and output devices: the keyboard is how a person gives the computer input."
+
+[node name="Mesh" type="MeshInstance3D" parent="UsbPad"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.001, 0)
+mesh = SubResource("Mesh_slot_UsbPad")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="UsbPad"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.06, 0)
+shape = SubResource("Shape_zone_UsbPad")
+
+[node name="Label" type="Label3D" parent="UsbPad"]
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0.003, 0)
+pixel_size = 0.0006
+text = "USB"
+font_size = 64
+outline_size = 8
+
+[node name="SnapPoint" type="Marker3D" parent="UsbPad"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.002, 0)
+
+[node name="Cpu" type="RigidBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.42, 0.9, 0.2)
+script = ExtResource("3_part")
+part_type = &"cpu"
+display_name = "CPU"
+
+[node name="Mesh" type="MeshInstance3D" parent="Cpu"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.002, 0)
+mesh = SubResource("Mesh_part_Cpu")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Cpu"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.006, 0)
+shape = SubResource("Shape_part_Cpu")
+
+[node name="Name" type="Label3D" parent="Cpu"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+billboard = 1
+pixel_size = 0.0004
+text = "CPU"
+font_size = 48
+outline_size = 10
+
+[node name="Ram" type="RigidBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.25, 0.9, 0.22)
+script = ExtResource("3_part")
+part_type = &"ram"
+display_name = "RAM stick"
+
+[node name="Mesh" type="MeshInstance3D" parent="Ram"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0155, 0)
+mesh = SubResource("Mesh_part_Ram")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Ram"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0155, 0)
+shape = SubResource("Shape_part_Ram")
+
+[node name="Name" type="Label3D" parent="Ram"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+billboard = 1
+pixel_size = 0.0004
+text = "RAM stick"
+font_size = 48
+outline_size = 10
+
+[node name="Ssd" type="RigidBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.08, 0.9, 0.24)
+script = ExtResource("3_part")
+part_type = &"storage"
+display_name = "SSD"
+
+[node name="Mesh" type="MeshInstance3D" parent="Ssd"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0015, 0)
+mesh = SubResource("Mesh_part_Ssd")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Ssd"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.005, 0)
+shape = SubResource("Shape_part_Ssd")
+
+[node name="Name" type="Label3D" parent="Ssd"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+billboard = 1
+pixel_size = 0.0004
+text = "SSD"
+font_size = 48
+outline_size = 10
+
+[node name="Keyboard" type="RigidBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.22, 0.9, 0.24)
+script = ExtResource("3_part")
+part_type = &"input"
+display_name = "keyboard"
+
+[node name="Mesh" type="MeshInstance3D" parent="Keyboard"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.01, 0)
+mesh = SubResource("Mesh_part_Keyboard")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Keyboard"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.01, 0)
+shape = SubResource("Shape_part_Keyboard")
+
+[node name="Name" type="Label3D" parent="Keyboard"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.05, 0)
+billboard = 1
+pixel_size = 0.0004
+text = "Keyboard"
+font_size = 48
+outline_size = 10
+
+[node name="InfoPanel" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.9063, 0.4226, 0, -0.4226, 0.9063, 0, 1.12, -0.32)
+script = ExtResource("5_panel")
