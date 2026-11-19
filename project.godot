@@ -15,6 +15,10 @@ config/description="OCS VR: AP CSP Unit 4 training (Build a Computer, Build a Ne
 run/main_scene="res://scenes/build_computer/identify_components.tscn"
 config/features=PackedStringArray("4.7", "Mobile")
 
+[autoload]
+
+TrainingManager="*res://scripts/training_manager.gd"
+
 [display]
 
 window/size/viewport_width=1280

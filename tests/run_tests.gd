@@ -1,18 +1,21 @@
 extends SceneTree
-## Headless checks for the step 1 workbench. Run from the project folder:
+## Headless checks. Run from the project folder:
 ##
 ##   godot --headless --import          (once, after cloning or adding files)
 ##   godot --headless --script res://tests/run_tests.gd
 ##
-## Exit code 0 means every check passed. Each test loads a fresh workbench,
-## moves parts the way a grabber would, and steps physics so the SnapZone's
-## Area3D sees the overlap, exactly as in the game.
+## Exit code 0 means every check passed. Tests load real scenes, move parts the
+## way a grabber does (often through the real mouse grabber and camera) and step
+## physics, so the SnapZones' Area3Ds see the overlaps exactly as in the game.
 
 const Workbench := preload("res://scenes/workbench.tscn")
 const IdentifyComponents := preload("res://scenes/build_computer/identify_components.tscn")
 const GrabbablePart := preload("res://scripts/grabbable_part.gd")
+const ModuleRegistry := preload("res://scripts/module_registry.gd")
+const TrainingManagerScript := preload("res://scripts/training_manager.gd")
 
 var _failures: Array[String] = []
+var manager: Node
 
 
 func _initialize() -> void:
@@ -20,15 +23,24 @@ func _initialize() -> void:
 
 
 func _run() -> void:
-	await _test_right_part_snaps()
-	await _test_drop_outside_goes_home()
-	await _test_wrong_part_is_rejected()
-	await _test_installed_part_cannot_be_grabbed()
-	await _test_mouse_grabber_end_to_end()
-	await _test_mission_intro()
-	await _test_mission_perfect_run()
-	await _test_mission_mistake_gives_hint_and_costs_points()
-	await _test_mission_part_homes_are_clear_of_slots()
+	# Godot doesn't load autoloads for --script runs, so add the TrainingManager
+	# at the same path the game uses.
+	manager = root.get_node_or_null("TrainingManager")
+	if manager == null:
+		manager = TrainingManagerScript.new()
+		manager.name = "TrainingManager"
+		root.add_child(manager)
+	for test in [
+		_test_registry_loads, _test_registry_catches_mistakes, _test_manager_flow,
+		_test_right_part_snaps, _test_drop_outside_goes_home, _test_wrong_part_is_rejected,
+		_test_installed_part_cannot_be_grabbed, _test_mouse_grabber_end_to_end,
+		_test_practice_mission_from_registry_only, _test_mission_intro, _test_mission_perfect_run,
+		_test_mission_mistake_gives_hint_and_costs_points, _test_mission_part_homes_are_clear_of_slots,
+		_test_scoring_is_data, _test_scene_registry_mismatch_is_reported,
+	]:
+		manager.use_registry(ModuleRegistry.load_from())
+		manager.now_ms = Time.get_ticks_msec
+		await test.call()
 	print("\n%s" % ("ALL PASSED" if _failures.is_empty() else "%d FAILED" % _failures.size()))
 	quit(0 if _failures.is_empty() else 1)
 
@@ -39,14 +51,15 @@ func check(label: String, ok: bool, detail := "") -> void:
 		_failures.append(label)
 
 
-func _fresh_bench(scene: PackedScene = Workbench) -> Node3D:
+func _fresh(scene: PackedScene = Workbench) -> Node3D:
 	for child in root.get_children():
-		child.queue_free()
+		if child != manager:
+			child.queue_free()
 	await process_frame
-	var bench := scene.instantiate()
-	root.add_child(bench)
+	var node := scene.instantiate()
+	root.add_child(node)
 	await _settle()
-	return bench
+	return node
 
 
 func _settle(frames := 3) -> void:
@@ -54,7 +67,16 @@ func _settle(frames := 3) -> void:
 		await physics_frame
 
 
-## What a grabber does: pick up, carry to `to`, let physics see it, drop.
+## A fake clock: each call returns the next number from `times` (ms).
+func _clock(times: Array) -> Callable:
+	return func() -> int: return times.pop_front()
+
+
+func _above(scene: Node3D, slot_path: String) -> Vector3:
+	return (scene.get_node(slot_path) as Node3D).global_position + Vector3(0.0, 0.05, 0.0)
+
+
+## What a grabber does, without the mouse: pick up, carry to `to`, drop.
 func _carry_and_drop(part: GrabbablePart, to: Vector3) -> void:
 	part.grab()
 	part.global_position = to
@@ -63,29 +85,95 @@ func _carry_and_drop(part: GrabbablePart, to: Vector3) -> void:
 	await _settle()
 
 
-func _above_slot(bench: Node3D) -> Vector3:
-	var slot: Node3D = bench.get_node("Motherboard/RamSlot")
-	return slot.global_position + Vector3(0.01, 0.05, 0.0)
+## The real input path: grab through the camera, carry, release.
+func _place(scene: Node3D, part_name: String, to: Vector3) -> void:
+	var part: GrabbablePart = scene.get_node(part_name)
+	var grabber = scene.get_node("Room/MouseGrabber")
+	var camera: Camera3D = scene.get_node("Room/Camera3D")
+	var grabbed = grabber.try_grab_at(camera.unproject_position(part.global_position + Vector3(0, 0.005, 0)))
+	if grabbed != part:
+		check("grabbing the %s through the camera" % part_name, false, "got %s" % grabbed)
+		return
+	part.global_position = to
+	await _settle()
+	grabber.release()
+	await _settle()
 
+
+# ---- Step 4: the module registry and the TrainingManager ----
+
+func _test_registry_loads() -> void:
+	var registry = ModuleRegistry.load_from()
+	check("data/modules.json loads with no problems", registry.errors.is_empty(), "; ".join(registry.errors))
+	check("it lists both Build a Computer missions",
+		registry.modules.size() == 1 and registry.modules[0].mission_ids == ["build_computer.install_ram", "build_computer.identify_components"],
+		str(registry.modules))
+	check("a mission keeps its module title and full id",
+		registry.mission("build_computer.identify_components").get("module_title") == "Build a Computer")
+
+
+func _bad(mutate: Callable) -> PackedStringArray:
+	var data = JSON.parse_string(FileAccess.get_file_as_string("res://data/modules.json"))
+	mutate.call(data.modules[0].missions[1])
+	var registry = ModuleRegistry.new()
+	registry.read(data)
+	return registry.errors
+
+
+func _test_registry_catches_mistakes() -> void:
+	var errors := _bad(func(m): m.slots["Motherboard/RamSlot"].accepts = "rom")
+	check("a slot that accepts a type no part has is caught, naming the slot",
+		errors.size() >= 1 and 'slot "Motherboard/RamSlot" accepts "rom"' in errors[0], str(errors))
+	errors = _bad(func(m): m.erase("scoring"))
+	check("missing scoring is caught", errors.size() == 1 and ".scoring" in errors[0], str(errors))
+	errors = _bad(func(m): m.scene = "res://scenes/nope.tscn")
+	check("a scene that doesn't exist is caught", errors.size() == 1 and "doesn't exist" in errors[0], str(errors))
+	errors = _bad(func(m): m.id = "install_ram")
+	check("a mission id used twice is caught", errors.size() == 1 and "used twice" in errors[0], str(errors))
+	errors = _bad(func(m): m.slots["Extra"] = {"accepts": "cpu", "name": "2nd socket", "hint": "x"})
+	check("two cpu slots with one CPU is caught (it could never finish)", errors.size() == 1 and '2 slots accept "cpu"' in errors[0], str(errors))
+	errors = _bad(func(m): m.intro = [])
+	check("an empty intro is caught", errors.size() == 1 and ".intro" in errors[0], str(errors))
+
+
+func _test_manager_flow() -> void:
+	check("an unknown mission returns nothing and stays idle",
+		manager.begin("build_computer.nope").is_empty() and manager.state == manager.State.IDLE)
+	manager.now_ms = _clock([5000, 65000])
+	var done := []
+	var on_done := func(id, score, secs): done.append([id, score, secs])
+	manager.module_completed.connect(on_done)
+	manager.begin("build_computer.identify_components")
+	manager.note_mistake()
+	check("mistakes before the first grab don't count", manager.mistakes == 0)
+	manager.note_grab()
+	manager.note_mistake()
+	manager.complete()
+	manager.complete()
+	manager.module_completed.disconnect(on_done)
+	check("module_completed fires once with (module_id, score, duration_s)",
+		done == [["build_computer.identify_components", 90, 60]], str(done))
+	check("attempts is 1 plus the mistakes", manager.attempts == 2)
+
+
+# ---- Step 1: snap mechanics, on the install_ram practice mission ----
 
 func _test_right_part_snaps() -> void:
-	var bench := await _fresh_bench()
+	var bench := await _fresh()
 	var ram: GrabbablePart = bench.get_node("RamStick")
 	var slot = bench.get_node("Motherboard/RamSlot")
 	var events := []
 	slot.snapped.connect(func(zone, part): events.append([zone, part]))
-	await _carry_and_drop(ram, _above_slot(bench))
+	await _carry_and_drop(ram, _above(bench, "Motherboard/RamSlot"))
 	check("RAM dropped over the RAM slot snaps in", ram.is_installed and events.size() == 1)
 	check("the slot reports the RAM as installed", slot.installed_part == ram)
 	var snap: Transform3D = slot.get_node("SnapPoint").global_transform
 	check("the RAM sits exactly on the slot's snap point",
-		ram.global_transform.origin.distance_to(snap.origin) < 0.0001,
-		str(ram.global_transform.origin, " vs ", snap.origin))
-	check("the sign says it's installed", bench.get_node("Sign").text == "RAM stick installed!", bench.get_node("Sign").text)
+		ram.global_transform.origin.distance_to(snap.origin) < 0.0001, str(ram.global_transform.origin, " vs ", snap.origin))
 
 
 func _test_drop_outside_goes_home() -> void:
-	var bench := await _fresh_bench()
+	var bench := await _fresh()
 	var ram: GrabbablePart = bench.get_node("RamStick")
 	var home := ram.global_transform
 	await _carry_and_drop(ram, Vector3(0.4, 0.95, 0.2))
@@ -94,7 +182,7 @@ func _test_drop_outside_goes_home() -> void:
 
 
 func _test_wrong_part_is_rejected() -> void:
-	var bench := await _fresh_bench()
+	var bench := await _fresh()
 	var cpu: GrabbablePart = GrabbablePart.new()
 	cpu.part_type = &"cpu"
 	cpu.display_name = "CPU"
@@ -105,36 +193,35 @@ func _test_wrong_part_is_rejected() -> void:
 	cpu.position = Vector3(0.3, 0.9, 0.15)
 	bench.add_child(cpu)
 	await _settle()
+	manager.note_grab()
 	var slot = bench.get_node("Motherboard/RamSlot")
 	var rejected := []
 	slot.rejected.connect(func(zone, part): rejected.append(part))
 	var home := cpu.global_transform
-	await _carry_and_drop(cpu, _above_slot(bench))
+	await _carry_and_drop(cpu, _above(bench, "Motherboard/RamSlot"))
 	check("a CPU dropped on the RAM slot is rejected", rejected == [cpu] and not cpu.is_installed)
 	check("and goes back home", cpu.global_transform.is_equal_approx(home))
 	check("the slot stays empty", slot.installed_part == null)
-	check("the sign explains the mistake", "doesn't go in the RAM slot" in bench.get_node("Sign").text, bench.get_node("Sign").text)
+	check("the panel explains with the slot's hint from the registry",
+		"The CPU doesn't go there. The long slot is for memory" in bench.panel.text(), bench.panel.text())
 
 
 func _test_installed_part_cannot_be_grabbed() -> void:
-	var bench := await _fresh_bench()
+	var bench := await _fresh()
 	var ram: GrabbablePart = bench.get_node("RamStick")
-	await _carry_and_drop(ram, _above_slot(bench))
+	await _carry_and_drop(ram, _above(bench, "Motherboard/RamSlot"))
 	check("an installed part can't be picked up again", not ram.grab() and not ram.is_held)
 
 
-## The real input path: the mouse grabber turns screen positions into a grab,
-## a carry and a drop, through the camera the player sees.
 func _test_mouse_grabber_end_to_end() -> void:
-	var bench := await _fresh_bench()
+	var bench := await _fresh()
 	var ram: GrabbablePart = bench.get_node("RamStick")
 	var grabber = bench.get_node("Room/MouseGrabber")
 	var camera: Camera3D = bench.get_node("Room/Camera3D")
 	var on_ram := camera.unproject_position(ram.global_position + Vector3(0, 0.0155, 0))
 	var grabbed = grabber.try_grab_at(on_ram)
-	check("pressing on the RAM through the camera picks it up", grabbed == ram and ram.is_held,
-		"screen %s" % on_ram)
-	var target := _above_slot(bench)
+	check("pressing on the RAM through the camera picks it up", grabbed == ram and ram.is_held, "screen %s" % on_ram)
+	var target := _above(bench, "Motherboard/RamSlot")
 	target.y = grabber.carry_height
 	grabber.carry_to(camera.unproject_position(target))
 	await _settle()
@@ -147,80 +234,100 @@ func _test_mouse_grabber_end_to_end() -> void:
 		grabber.try_grab_at(camera.unproject_position(Vector3(0.45, 0.9, 0.25))) == null)
 
 
+func _test_practice_mission_from_registry_only() -> void:
+	# The step 1 workbench has no script of its own any more: it's the
+	# build_computer.install_ram entry in data/modules.json on mission.gd.
+	var bench := await _fresh()
+	check("the workbench is a registry mission with no problems", bench.problems.is_empty(), "; ".join(bench.problems))
+	check("its part and slot got their names from the registry",
+		bench.get_node("RamStick").display_name == "RAM stick" and bench.get_node("Motherboard/RamSlot").accepts == &"ram")
+	check("its panel shows the registry's intro", "Drag the RAM stick into the RAM slot." in bench.panel.text(), bench.panel.text())
+	await _place(bench, "RamStick", _above(bench, "Motherboard/RamSlot"))
+	check("installing the RAM completes it with the registry's success text",
+		manager.state == manager.State.SUCCESS and "RAM installed!" in bench.panel.text(), bench.panel.text())
+
+
 # ---- Step 2: the "Identify components" mission ----
 
-## A fake clock: each call returns the next number from `times` (ms).
-func _clock(times: Array) -> Callable:
-	return func() -> int: return times.pop_front()
-
-
-func _slot_top(mission: Node3D, slot_path: String) -> Vector3:
-	return (mission.get_node(slot_path) as Node3D).global_position + Vector3(0, 0.05, 0)
-
-
-## Picks a part up through the real grabber (so the mission sees the grab),
-## carries it to `to` and drops it.
-func _place(mission: Node3D, part_name: String, to: Vector3) -> void:
-	var part: GrabbablePart = mission.get_node(part_name)
-	var grabber = mission.get_node("Room/MouseGrabber")
-	var camera: Camera3D = mission.get_node("Room/Camera3D")
-	var grabbed = grabber.try_grab_at(camera.unproject_position(part.global_position + Vector3(0, 0.005, 0)))
-	if grabbed != part:
-		check("grabbing the %s through the camera" % part_name, false, "got %s" % grabbed)
-		return
-	part.global_position = to
-	await _settle()
-	grabber.release()
-	await _settle()
-
-
 func _test_mission_intro() -> void:
-	var mission := await _fresh_bench(IdentifyComponents)
-	check("the mission starts in Intro", mission.state == mission.State.INTRO)
-	check("it has four slots", mission.zones.size() == 4, str(mission.zones.size()))
+	var mission := await _fresh(IdentifyComponents)
+	check("the mission starts in Intro", manager.state == manager.State.INTRO)
+	check("it has four slots and four parts, all from the registry",
+		mission.zones.size() == 4 and mission.parts.size() == 4 and mission.problems.is_empty(), "; ".join(mission.problems))
 	check("the intro panel explains the task", "four things" in mission.panel.text(), mission.panel.text())
+	check("the part tags show the registry names", mission.get_node("Keyboard/Name").text == "Keyboard", mission.get_node("Keyboard/Name").text)
 
 
 func _test_mission_perfect_run() -> void:
-	var mission := await _fresh_bench(IdentifyComponents)
-	mission.now_ms = _clock([1000, 96000])
+	var mission := await _fresh(IdentifyComponents)
+	manager.now_ms = _clock([1000, 96000])
 	var results := []
-	mission.mission_completed.connect(func(id, score, secs, attempts): results.append([id, score, secs, attempts]))
-	await _place(mission, "Cpu", _slot_top(mission, "Motherboard/CpuSocket"))
-	check("first grab starts the mission", mission.state == mission.State.ACTIVE)
+	var on_done := func(id, score, secs): results.append([id, score, secs, manager.attempts])
+	manager.module_completed.connect(on_done)
+	await _place(mission, "Cpu", _above(mission, "Motherboard/CpuSocket"))
+	check("first grab starts the mission", manager.state == manager.State.ACTIVE)
 	check("the checklist ticks the CPU socket", "[x] CPU socket" in mission.panel.text(), mission.panel.text())
-	await _place(mission, "Ram", _slot_top(mission, "Motherboard/RamSlot"))
-	await _place(mission, "Ssd", _slot_top(mission, "Motherboard/M2Slot"))
-	check("three of four placed is not finished yet", mission.state == mission.State.ACTIVE)
-	await _place(mission, "Keyboard", _slot_top(mission, "UsbPad"))
-	check("all four placed: Success", mission.state == mission.State.SUCCESS)
-	check("mission_completed fires once with the API's fields",
+	await _place(mission, "Ram", _above(mission, "Motherboard/RamSlot"))
+	await _place(mission, "Ssd", _above(mission, "Motherboard/M2Slot"))
+	check("three of four placed is not finished yet", manager.state == manager.State.ACTIVE)
+	await _place(mission, "Keyboard", _above(mission, "UsbPad"))
+	manager.module_completed.disconnect(on_done)
+	check("all four placed: Success", manager.state == manager.State.SUCCESS)
+	check("module_completed fires once with the API's fields",
 		results == [["build_computer.identify_components", 100, 95, 1]], str(results))
 	check("the success panel shows score and time", "Score: 100" in mission.panel.text() and "1:35" in mission.panel.text(), mission.panel.text())
 
 
 func _test_mission_mistake_gives_hint_and_costs_points() -> void:
-	var mission := await _fresh_bench(IdentifyComponents)
-	mission.now_ms = _clock([0, 60000])
+	var mission := await _fresh(IdentifyComponents)
+	manager.now_ms = _clock([0, 60000])
 	var results := []
-	mission.mission_completed.connect(func(id, score, secs, attempts): results.append([score, secs, attempts]))
-	await _place(mission, "Ssd", _slot_top(mission, "Motherboard/RamSlot"))
-	check("the SSD on the RAM slot is a mistake", mission.mistakes == 1 and not mission.get_node("Ssd").is_installed)
+	var on_done := func(id, score, secs): results.append([score, secs, manager.attempts])
+	manager.module_completed.connect(on_done)
+	await _place(mission, "Ssd", _above(mission, "Motherboard/RamSlot"))
+	check("the SSD on the RAM slot is a mistake", manager.mistakes == 1 and not mission.get_node("Ssd").is_installed)
 	check("the panel says why, with the RAM slot's hint", "holds what the CPU is working on" in mission.panel.text(), mission.panel.text())
-	await _place(mission, "Keyboard", _slot_top(mission, "Motherboard/CpuSocket"))
-	check("the keyboard covers three slots but counts as one mistake", mission.mistakes == 2, str(mission.mistakes))
+	await _place(mission, "Keyboard", _above(mission, "Motherboard/CpuSocket"))
+	check("the keyboard covers three slots but counts as one mistake", manager.mistakes == 2, str(manager.mistakes))
 	check("and the CPU socket is the one that explains", "for the processor" in mission.panel.text(), mission.panel.text())
 	for pair in [["Cpu", "Motherboard/CpuSocket"], ["Ram", "Motherboard/RamSlot"], ["Ssd", "Motherboard/M2Slot"], ["Keyboard", "UsbPad"]]:
-		await _place(mission, pair[0], _slot_top(mission, pair[1]))
+		await _place(mission, pair[0], _above(mission, pair[1]))
+	manager.module_completed.disconnect(on_done)
 	check("two mistakes: score 80, 3 attempts, 60 s", results == [[80, 60, 3]], str(results))
 
 
 func _test_mission_part_homes_are_clear_of_slots() -> void:
 	# A part that starts inside a slot's area would install itself on its first drop.
-	var mission := await _fresh_bench(IdentifyComponents)
+	var mission := await _fresh(IdentifyComponents)
 	var overlapping := []
 	for zone in mission.zones:
 		for body in zone.get_overlapping_bodies():
 			if body is GrabbablePart:
 				overlapping.append("%s in %s" % [body.name, zone.name])
 	check("no part starts inside a slot", overlapping.is_empty(), str(overlapping))
+
+
+func _test_scoring_is_data() -> void:
+	# Changing the registry, not code, changes the game.
+	var data = JSON.parse_string(FileAccess.get_file_as_string("res://data/modules.json"))
+	data.modules[0].missions[1].scoring.per_mistake = 25
+	var registry = ModuleRegistry.new()
+	registry.read(data)
+	manager.use_registry(registry)
+	var mission := await _fresh(IdentifyComponents)
+	await _place(mission, "Ssd", _above(mission, "Motherboard/RamSlot"))
+	check("per_mistake 25 in the registry makes one mistake cost 25 points", manager.score == 75, str(manager.score))
+
+
+func _test_scene_registry_mismatch_is_reported() -> void:
+	var data = JSON.parse_string(FileAccess.get_file_as_string("res://data/modules.json"))
+	data.modules[0].missions[1].slots["Motherboard/GpuSlot"] = {"accepts": "cpu", "name": "GPU slot", "hint": "x"}
+	data.modules[0].missions[1].parts["Gpu"] = {"type": "cpu", "name": "GPU"}
+	var registry = ModuleRegistry.new()
+	registry.read(data)
+	manager.use_registry(registry)
+	var mission := await _fresh(IdentifyComponents)
+	check("a registry slot missing from the scene is reported",
+		mission.problems.has('slot "Motherboard/GpuSlot" isn\'t a SnapZone in res://scenes/build_computer/identify_components.tscn'),
+		"; ".join(mission.problems))
+	check("so is a registry part missing from the scene", mission.problems.size() == 2, "; ".join(mission.problems))

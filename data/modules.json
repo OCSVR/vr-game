@@ -1,0 +1,74 @@
+{
+  "modules": [
+    {
+      "id": "build_computer",
+      "title": "Build a Computer",
+      "missions": [
+        {
+          "id": "install_ram",
+          "title": "Install the RAM",
+          "practice": true,
+          "scene": "res://scenes/workbench.tscn",
+          "intro": [
+            "Drag the RAM stick into the RAM slot."
+          ],
+          "success": [
+            "RAM installed! Memory holds what the CPU is working on right now."
+          ],
+          "scoring": { "full": 100, "per_mistake": 10 },
+          "parts": {
+            "RamStick": { "type": "ram", "name": "RAM stick" }
+          },
+          "slots": {
+            "Motherboard/RamSlot": {
+              "accepts": "ram",
+              "name": "RAM slot",
+              "hint": "The long slot is for memory (RAM): it holds what the CPU is working on right now."
+            }
+          }
+        },
+        {
+          "id": "identify_components",
+          "title": "Identify the components",
+          "scene": "res://scenes/build_computer/identify_components.tscn",
+          "intro": [
+            "Every computer needs four things: a processor, memory, storage, and a way to talk to people.",
+            "Put each part on the table where it belongs. Pick up any part to start."
+          ],
+          "success": [
+            "You built the core of a computer: processor, memory, storage and input."
+          ],
+          "scoring": { "full": 100, "per_mistake": 10 },
+          "parts": {
+            "Cpu": { "type": "cpu", "name": "CPU" },
+            "Ram": { "type": "ram", "name": "RAM stick" },
+            "Ssd": { "type": "storage", "name": "SSD" },
+            "Keyboard": { "type": "input", "name": "keyboard" }
+          },
+          "slots": {
+            "Motherboard/CpuSocket": {
+              "accepts": "cpu",
+              "name": "CPU socket",
+              "hint": "The square socket is for the processor (CPU): it runs every instruction."
+            },
+            "Motherboard/RamSlot": {
+              "accepts": "ram",
+              "name": "RAM slot",
+              "hint": "The long slot is for memory (RAM): it holds what the CPU is working on right now."
+            },
+            "Motherboard/M2Slot": {
+              "accepts": "storage",
+              "name": "M.2 storage slot",
+              "hint": "The flat M.2 slot is for storage (the SSD): it keeps files and programs even when the power is off."
+            },
+            "UsbPad": {
+              "accepts": "input",
+              "name": "keyboard spot (USB port)",
+              "hint": "The USB spot is for input and output devices: the keyboard is how a person gives the computer input."
+            }
+          }
+        }
+      ]
+    }
+  ]
+}
