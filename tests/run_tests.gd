@@ -14,6 +14,9 @@ const GrabbablePart := preload("res://scripts/grabbable_part.gd")
 const ModuleRegistry := preload("res://scripts/module_registry.gd")
 const TrainingManagerScript := preload("res://scripts/training_manager.gd")
 
+## Nodes under the root that stay between tests.
+const AUTOLOADS := [&"TrainingManager", &"ScoreReporter"]
+
 var _failures: Array[String] = []
 var manager: Node
 
@@ -23,8 +26,8 @@ func _initialize() -> void:
 
 
 func _run() -> void:
-	# Godot doesn't load autoloads for --script runs, so add the TrainingManager
-	# at the same path the game uses.
+	# The project's autoloads (TrainingManager, ScoreReporter) are loaded for
+	# --script runs too; add the TrainingManager only if it's missing.
 	manager = root.get_node_or_null("TrainingManager")
 	if manager == null:
 		manager = TrainingManagerScript.new()
@@ -53,7 +56,7 @@ func check(label: String, ok: bool, detail := "") -> void:
 
 func _fresh(scene: PackedScene = Workbench) -> Node3D:
 	for child in root.get_children():
-		if child != manager:
+		if not child.name in AUTOLOADS:
 			child.queue_free()
 	await process_frame
 	var node := scene.instantiate()
