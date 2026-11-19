@@ -85,6 +85,13 @@ func return_home() -> void:
 	global_transform = home_transform
 
 
+## Puts the part somewhere new and makes that its home, still free to grab.
+## Used by pass-through zones (data moving from one stage to the next).
+func move_home(at: Transform3D) -> void:
+	global_transform = at
+	home_transform = at
+
+
 ## Called by the SnapZone that accepted the part.
 func install(zone: Node3D, at: Transform3D) -> void:
 	global_transform = at
