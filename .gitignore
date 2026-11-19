@@ -1,0 +1,12 @@
+# Godot's import cache and editor state; every computer rebuilds it.
+.godot/
+
+# Each computer makes its own with Project > Install Android Build Template.
+/android/
+
+# Exported apps (build/ocsvr-quest.apk and friends).
+build/
+
+# Export credentials and per-machine export settings stay local.
+export_credentials.cfg
+.DS_Store
