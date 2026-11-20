@@ -1,0 +1,186 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/missions/mission.gd" id="1_mission"]
+[ext_resource type="PackedScene" path="res://scenes/room.tscn" id="2_room"]
+[ext_resource type="Script" path="res://scripts/grabbable_part.gd" id="3_part"]
+[ext_resource type="Script" path="res://scripts/snap_zone.gd" id="4_zone"]
+[ext_resource type="Script" path="res://scripts/ui/info_panel.gd" id="5_panel"]
+
+[sub_resource type="StandardMaterial3D" id="Mat_1"]
+albedo_color = Color(0.1, 0.35, 0.2, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_1"]
+material = SubResource("Mat_1")
+size = Vector3(0.305, 0.004, 0.244)
+
+[sub_resource type="StandardMaterial3D" id="Mat_2"]
+albedo_color = Color(0.6, 0.62, 0.66, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_2"]
+material = SubResource("Mat_2")
+size = Vector3(0.0375, 0.004, 0.0375)
+
+[sub_resource type="StandardMaterial3D" id="Mat_3"]
+albedo_color = Color(0.2, 0.45, 0.85, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_3"]
+material = SubResource("Mat_3")
+size = Vector3(0.133, 0.031, 0.004)
+
+[sub_resource type="StandardMaterial3D" id="Mat_4"]
+albedo_color = Color(0.15, 0.15, 0.18, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_4"]
+material = SubResource("Mat_4")
+size = Vector3(0.022, 0.003, 0.08)
+
+[sub_resource type="StandardMaterial3D" id="Mat_5"]
+albedo_color = Color(0.08, 0.08, 0.09, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_5"]
+material = SubResource("Mat_5")
+size = Vector3(0.04, 0.1, 0.04)
+
+[sub_resource type="StandardMaterial3D" id="Mat_6"]
+albedo_color = Color(0.05, 0.07, 0.12, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_6"]
+material = SubResource("Mat_6")
+size = Vector3(0.32, 0.19, 0.015)
+
+[sub_resource type="StandardMaterial3D" id="Mat_7"]
+albedo_color = Color(0.08, 0.08, 0.09, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_7"]
+material = SubResource("Mat_7")
+size = Vector3(0.16, 0.006, 0.1)
+
+[sub_resource type="BoxShape3D" id="Shape_8"]
+size = Vector3(0.17, 0.12, 0.06)
+
+[sub_resource type="BoxShape3D" id="Shape_9"]
+size = Vector3(0.08, 0.12, 0.08)
+
+[sub_resource type="StandardMaterial3D" id="Mat_10"]
+albedo_color = Color(0.2, 0.3, 0.5, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_10"]
+material = SubResource("Mat_10")
+size = Vector3(0.16, 0.002, 0.06)
+
+[sub_resource type="BoxShape3D" id="Shape_11"]
+size = Vector3(0.2, 0.12, 0.1)
+
+[sub_resource type="StandardMaterial3D" id="Mat_12"]
+albedo_color = Color(0.95, 0.75, 0.2, 1)
+emission_enabled = true
+emission = Color(0.95, 0.75, 0.2, 1)
+emission_energy_multiplier = 0.6
+
+[sub_resource type="BoxMesh" id="Mesh_12"]
+material = SubResource("Mat_12")
+size = Vector3(0.035, 0.035, 0.035)
+
+[sub_resource type="BoxShape3D" id="Shape_13"]
+size = Vector3(0.035, 0.035, 0.035)
+
+[node name="ExecuteTask" type="Node3D"]
+script = ExtResource("1_mission")
+mission_id = "build_computer.execute_task"
+
+[node name="Room" parent="." instance=ExtResource("2_room")]
+
+[node name="Board" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.902, -0.05)
+mesh = SubResource("Mesh_1")
+
+[node name="CpuChip" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.06, 0.906, -0.08)
+mesh = SubResource("Mesh_2")
+
+[node name="RamStick" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.07, 0.9195, -0.08)
+mesh = SubResource("Mesh_3")
+
+[node name="SsdCard" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0, 0.9055, 0.02)
+mesh = SubResource("Mesh_4")
+
+[node name="MonitorStand" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.35, 0.95, -0.12)
+mesh = SubResource("Mesh_5")
+
+[node name="MonitorScreen" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.35, 1.06, -0.12)
+mesh = SubResource("Mesh_6")
+
+[node name="MonitorBase" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.35, 0.903, -0.1)
+mesh = SubResource("Mesh_7")
+
+[node name="MemoryStage" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.07, 0.904, -0.08)
+script = ExtResource("4_zone")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="MemoryStage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.06, 0)
+shape = SubResource("Shape_8")
+
+[node name="SnapPoint" type="Marker3D" parent="MemoryStage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.04, 0)
+
+[node name="CpuStage" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.06, 0.904, -0.08)
+script = ExtResource("4_zone")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="CpuStage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.06, 0)
+shape = SubResource("Shape_9")
+
+[node name="SnapPoint" type="Marker3D" parent="CpuStage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.01, 0)
+
+[node name="ScreenStage" type="Area3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.35, 0.906, -0.04)
+script = ExtResource("4_zone")
+
+[node name="Mesh" type="MeshInstance3D" parent="ScreenStage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.001, 0)
+mesh = SubResource("Mesh_10")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="ScreenStage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.06, 0)
+shape = SubResource("Shape_11")
+
+[node name="SnapPoint" type="Marker3D" parent="ScreenStage"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.004, 0)
+
+[node name="Label" type="Label3D" parent="ScreenStage"]
+transform = Transform3D(1, 0, 0, 0, 0, 1, 0, -1, 0, 0, 0.004, 0)
+pixel_size = 0.0005
+text = "Screen"
+font_size = 48
+outline_size = 8
+
+[node name="PhotoFile" type="RigidBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0, 0.908, 0.02)
+script = ExtResource("3_part")
+
+[node name="Mesh" type="MeshInstance3D" parent="PhotoFile"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0175, 0)
+mesh = SubResource("Mesh_12")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="PhotoFile"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0175, 0)
+shape = SubResource("Shape_13")
+
+[node name="Name" type="Label3D" parent="PhotoFile"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.065, 0)
+billboard = 1
+pixel_size = 0.0004
+font_size = 48
+outline_size = 10
+
+[node name="InfoPanel" type="Node3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.9063, 0.4226, 0, -0.4226, 0.9063, 0, 1.12, -0.32)
+script = ExtResource("5_panel")

@@ -10,6 +10,8 @@ extends SceneTree
 
 const Workbench := preload("res://scenes/workbench.tscn")
 const IdentifyComponents := preload("res://scenes/build_computer/identify_components.tscn")
+const AssembleSystem := preload("res://scenes/build_computer/assemble_system.tscn")
+const ExecuteTask := preload("res://scenes/build_computer/execute_task.tscn")
 const GrabbablePart := preload("res://scripts/grabbable_part.gd")
 const ModuleRegistry := preload("res://scripts/module_registry.gd")
 const TrainingManagerScript := preload("res://scripts/training_manager.gd")
@@ -38,11 +40,15 @@ func _run() -> void:
 		_test_right_part_snaps, _test_drop_outside_goes_home, _test_wrong_part_is_rejected,
 		_test_installed_part_cannot_be_grabbed, _test_mouse_grabber_end_to_end,
 		_test_practice_mission_from_registry_only, _test_mission_intro, _test_mission_perfect_run,
-		_test_mission_mistake_gives_hint_and_costs_points, _test_mission_part_homes_are_clear_of_slots,
+		_test_mission_mistake_gives_hint_and_costs_points, _test_every_mission_scene_is_clean,
 		_test_scoring_is_data, _test_scene_registry_mismatch_is_reported,
+		_test_registry_checks_requires, _test_next_mission_order,
+		_test_assemble_power_goes_last, _test_assemble_perfect_run,
+		_test_execute_task_data_flow,
 	]:
 		manager.use_registry(ModuleRegistry.load_from())
 		manager.now_ms = Time.get_ticks_msec
+		manager.auto_advance = false
 		await test.call()
 	print("\n%s" % ("ALL PASSED" if _failures.is_empty() else "%d FAILED" % _failures.size()))
 	quit(0 if _failures.is_empty() else 1)
@@ -108,8 +114,9 @@ func _place(scene: Node3D, part_name: String, to: Vector3) -> void:
 func _test_registry_loads() -> void:
 	var registry = ModuleRegistry.load_from()
 	check("data/modules.json loads with no problems", registry.errors.is_empty(), "; ".join(registry.errors))
-	check("it lists both Build a Computer missions",
-		registry.modules.size() == 1 and registry.modules[0].mission_ids == ["build_computer.install_ram", "build_computer.identify_components"],
+	check("it lists the four Build a Computer missions in order",
+		registry.modules.size() == 1 and registry.modules[0].mission_ids == ["build_computer.install_ram",
+			"build_computer.identify_components", "build_computer.assemble_system", "build_computer.execute_task"],
 		str(registry.modules))
 	check("a mission keeps its module title and full id",
 		registry.mission("build_computer.identify_components").get("module_title") == "Build a Computer")
@@ -299,15 +306,20 @@ func _test_mission_mistake_gives_hint_and_costs_points() -> void:
 	check("two mistakes: score 80, 3 attempts, 60 s", results == [[80, 60, 3]], str(results))
 
 
-func _test_mission_part_homes_are_clear_of_slots() -> void:
-	# A part that starts inside a slot's area would install itself on its first drop.
-	var mission := await _fresh(IdentifyComponents)
-	var overlapping := []
-	for zone in mission.zones:
-		for body in zone.get_overlapping_bodies():
-			if body is GrabbablePart:
-				overlapping.append("%s in %s" % [body.name, zone.name])
-	check("no part starts inside a slot", overlapping.is_empty(), str(overlapping))
+func _test_every_mission_scene_is_clean() -> void:
+	# Every mission in the registry loads with no scene/registry mismatch, and no
+	# part starts inside a slot (it would install itself on its first drop).
+	for module in manager.registry.modules:
+		for full_id in module.mission_ids:
+			var mission := await _fresh(load(manager.registry.mission(full_id).scene))
+			var overlapping := []
+			for zone in mission.zones:
+				for body in zone.get_overlapping_bodies():
+					if body is GrabbablePart:
+						overlapping.append("%s in %s" % [body.name, zone.name])
+			check("%s: loads cleanly, no part starts inside a slot" % full_id,
+				mission.problems.is_empty() and overlapping.is_empty() and mission.zones.size() > 0,
+				"; ".join(mission.problems) + str(overlapping))
 
 
 func _test_scoring_is_data() -> void:
@@ -334,3 +346,75 @@ func _test_scene_registry_mismatch_is_reported() -> void:
 		mission.problems.has('slot "Motherboard/GpuSlot" isn\'t a SnapZone in res://scenes/build_computer/identify_components.tscn'),
 		"; ".join(mission.problems))
 	check("so is a registry part missing from the scene", mission.problems.size() == 2, "; ".join(mission.problems))
+
+
+# ---- Module 1 missions 3 and 4: requires, pass-through, roles ----
+
+func _test_registry_checks_requires() -> void:
+	var errors := _bad(func(m): m.slots["UsbPad"]["requires"] = ["Motherboard/Nope"])
+	check("requires naming a slot that doesn't exist is caught", errors.size() == 1 and 'requires "Motherboard/Nope"' in errors[0], str(errors))
+	errors = _bad(func(m):
+		m.slots["UsbPad"]["requires"] = ["Motherboard/CpuSocket"]
+		m.slots["Motherboard/CpuSocket"]["requires"] = ["UsbPad"])
+	check("a requires loop is caught (it could never finish)", errors.size() == 2 and "requires loop" in errors[0], str(errors))
+	errors = _bad(func(m): m.slots["UsbPad"]["pass_through"] = "yes")
+	check("pass_through that isn't true/false is caught", errors.size() == 1 and "pass_through" in errors[0], str(errors))
+
+
+func _test_next_mission_order() -> void:
+	check("missions chain in registry order",
+		manager.next_mission_id("build_computer.install_ram") == "build_computer.identify_components"
+			and manager.next_mission_id("build_computer.assemble_system") == "build_computer.execute_task")
+	check("the module's last mission has no next one", manager.next_mission_id("build_computer.execute_task") == "")
+
+
+func _test_assemble_power_goes_last() -> void:
+	var mission := await _fresh(AssembleSystem)
+	await _place(mission, "PowerCable", _above(mission, "PowerSocket"))
+	check("power before the parts is blocked: a mistake, cable goes home",
+		manager.mistakes == 1 and not mission.get_node("PowerCable").is_installed, str(manager.mistakes))
+	check("the panel says what has to come first",
+		"Not yet: the power socket needs the motherboard tray and the PSU bay and the drive bay first." in mission.panel.text(), mission.panel.text())
+	check("and the checklist marks the socket as waiting",
+		"[  ] power socket  (after the motherboard tray and the PSU bay and the drive bay)" in mission.panel.text(), mission.panel.text())
+
+
+func _test_assemble_perfect_run() -> void:
+	var mission := await _fresh(AssembleSystem)
+	manager.now_ms = _clock([0, 70000])
+	var results := []
+	var on_done := func(id, score, secs): results.append([id, score, secs])
+	manager.module_completed.connect(on_done)
+	await _place(mission, "Psu", _above(mission, "PsuBay"))
+	check("installing the PSU explains its role", "The PSU turns wall power into the steady voltages" in mission.panel.text(), mission.panel.text())
+	await _place(mission, "Motherboard", _above(mission, "MotherboardTray"))
+	await _place(mission, "Ssd", _above(mission, "DriveBay"))
+	await _place(mission, "PowerCable", _above(mission, "PowerSocket"))
+	manager.module_completed.disconnect(on_done)
+	check("power last completes the mission with full marks",
+		results == [["build_computer.assemble_system", 100, 70]], str(results))
+
+
+func _test_execute_task_data_flow() -> void:
+	var mission := await _fresh(ExecuteTask)
+	manager.now_ms = _clock([0, 45000])
+	var results := []
+	var on_done := func(id, score, secs): results.append([score, secs, manager.attempts])
+	manager.module_completed.connect(on_done)
+	var photo: GrabbablePart = mission.get_node("PhotoFile")
+	await _place(mission, "PhotoFile", _above(mission, "CpuStage"))
+	check("straight from storage to the CPU is blocked (data goes to RAM first)",
+		manager.mistakes == 1 and "needs the memory (RAM) first" in mission.panel.text(), mission.panel.text())
+	await _place(mission, "PhotoFile", _above(mission, "MemoryStage"))
+	var ram_snap: Vector3 = mission.get_node("MemoryStage/SnapPoint").global_position
+	check("into memory: the photo sits on the RAM and stays free to move on",
+		mission.get_node("MemoryStage").is_filled() and not photo.is_installed and photo.global_position.distance_to(ram_snap) < 0.0001)
+	check("the panel explains the step", "copied from storage into memory" in mission.panel.text(), mission.panel.text())
+	await _place(mission, "PhotoFile", _above(mission, "ScreenStage"))
+	check("memory straight to the screen is blocked (the CPU hasn't processed it)",
+		manager.mistakes == 2 and photo.global_position.distance_to(ram_snap) < 0.0001, mission.panel.text())
+	await _place(mission, "PhotoFile", _above(mission, "CpuStage"))
+	await _place(mission, "PhotoFile", _above(mission, "ScreenStage"))
+	manager.module_completed.disconnect(on_done)
+	check("RAM, then CPU, then screen completes it: score 80, 45 s, 3 attempts",
+		results == [[80, 45, 3]] and photo.is_installed, str(results))

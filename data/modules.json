@@ -15,9 +15,15 @@
           "success": [
             "RAM installed! Memory holds what the CPU is working on right now."
           ],
-          "scoring": { "full": 100, "per_mistake": 10 },
+          "scoring": {
+            "full": 100,
+            "per_mistake": 10
+          },
           "parts": {
-            "RamStick": { "type": "ram", "name": "RAM stick" }
+            "RamStick": {
+              "type": "ram",
+              "name": "RAM stick"
+            }
           },
           "slots": {
             "Motherboard/RamSlot": {
@@ -38,12 +44,27 @@
           "success": [
             "You built the core of a computer: processor, memory, storage and input."
           ],
-          "scoring": { "full": 100, "per_mistake": 10 },
+          "scoring": {
+            "full": 100,
+            "per_mistake": 10
+          },
           "parts": {
-            "Cpu": { "type": "cpu", "name": "CPU" },
-            "Ram": { "type": "ram", "name": "RAM stick" },
-            "Ssd": { "type": "storage", "name": "SSD" },
-            "Keyboard": { "type": "input", "name": "keyboard" }
+            "Cpu": {
+              "type": "cpu",
+              "name": "CPU"
+            },
+            "Ram": {
+              "type": "ram",
+              "name": "RAM stick"
+            },
+            "Ssd": {
+              "type": "storage",
+              "name": "SSD"
+            },
+            "Keyboard": {
+              "type": "input",
+              "name": "keyboard"
+            }
           },
           "slots": {
             "Motherboard/CpuSocket": {
@@ -65,6 +86,121 @@
               "accepts": "input",
               "name": "keyboard spot (USB port)",
               "hint": "The USB spot is for input and output devices: the keyboard is how a person gives the computer input."
+            }
+          }
+        },
+        {
+          "id": "assemble_system",
+          "title": "Assemble the system",
+          "scene": "res://scenes/build_computer/assemble_system.tscn",
+          "intro": [
+            "Build the computer inside its case. Every part has a job.",
+            "Mount the motherboard, the power supply (PSU) and the SSD. Plug the power in last."
+          ],
+          "success": [
+            "The computer is assembled: the PSU powers everything, the motherboard connects it, and the SSD stores it."
+          ],
+          "scoring": {
+            "full": 100,
+            "per_mistake": 10
+          },
+          "parts": {
+            "Motherboard": {
+              "type": "motherboard",
+              "name": "motherboard"
+            },
+            "Psu": {
+              "type": "psu",
+              "name": "power supply (PSU)"
+            },
+            "Ssd": {
+              "type": "drive",
+              "name": "SSD"
+            },
+            "PowerCable": {
+              "type": "power_cable",
+              "name": "power cable"
+            }
+          },
+          "slots": {
+            "MotherboardTray": {
+              "accepts": "motherboard",
+              "name": "motherboard tray",
+              "hint": "The big tray is for the motherboard: the board every other part plugs into.",
+              "role": "The motherboard connects every part so they can send data to each other."
+            },
+            "PsuBay": {
+              "accepts": "psu",
+              "name": "PSU bay",
+              "hint": "The bay by the back is for the power supply (PSU).",
+              "role": "The PSU turns wall power into the steady voltages every part needs."
+            },
+            "DriveBay": {
+              "accepts": "drive",
+              "name": "drive bay",
+              "hint": "The small bay is for storage: the SSD keeps files when the power is off.",
+              "role": "The SSD stores the operating system, programs and files."
+            },
+            "PowerSocket": {
+              "accepts": "power_cable",
+              "name": "power socket",
+              "hint": "Power goes in last, once every part is mounted, so nothing is live while you build.",
+              "role": "Power is connected. The computer can start.",
+              "requires": [
+                "MotherboardTray",
+                "PsuBay",
+                "DriveBay"
+              ]
+            }
+          }
+        },
+        {
+          "id": "execute_task",
+          "title": "Execute a task",
+          "scene": "res://scenes/build_computer/execute_task.tscn",
+          "intro": [
+            "Open a photo. The photo file (the glowing cube) starts on the SSD.",
+            "Carry it the way data really moves: into memory, through the processor, and onto the screen."
+          ],
+          "success": [
+            "That's how every program runs: storage to memory, memory to the CPU, and the result to an output device."
+          ],
+          "scoring": {
+            "full": 100,
+            "per_mistake": 10
+          },
+          "parts": {
+            "PhotoFile": {
+              "type": "data",
+              "name": "photo file"
+            }
+          },
+          "slots": {
+            "MemoryStage": {
+              "accepts": "data",
+              "name": "memory (RAM)",
+              "pass_through": true,
+              "hint": "Programs and files are loaded into memory first, because the CPU can only work with what's in RAM.",
+              "role": "The photo is copied from storage into memory (RAM), where the CPU can reach it fast."
+            },
+            "CpuStage": {
+              "accepts": "data",
+              "name": "processor (CPU)",
+              "pass_through": true,
+              "requires": [
+                "MemoryStage"
+              ],
+              "hint": "The CPU reads its data from memory, so the photo has to be in RAM before the CPU can decode it.",
+              "role": "The CPU follows the program's instructions to decode the photo into pixels."
+            },
+            "ScreenStage": {
+              "accepts": "data",
+              "name": "screen",
+              "requires": [
+                "CpuStage"
+              ],
+              "hint": "The screen shows what the CPU has finished, so the photo has to be processed first.",
+              "role": "The pixels are sent to the screen, an output device."
             }
           }
         }

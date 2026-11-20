@@ -130,11 +130,52 @@ func _read_slots(full_id: String, slots, part_types: Array) -> void:
 			continue
 		if not part_types.has(slot.accepts):
 			errors.append('%s: slot "%s" accepts "%s", but no part has that type' % [full_id, path, slot.accepts])
-		filled[slot.accepts] = filled.get(slot.accepts, 0) + 1
-	# Every slot needs its own part, or the mission could never finish.
+		if not slot.get("pass_through", false):
+			filled[slot.accepts] = filled.get(slot.accepts, 0) + 1
+	_read_slot_options(full_id, slots)
+	# Every slot needs its own part, or the mission could never finish. A
+	# pass-through slot doesn't keep its part, so the part can fill several.
 	for type in filled:
 		if part_types.count(type) < filled[type]:
 			errors.append('%s: %d slots accept "%s" but only %d part(s) have that type' % [full_id, filled[type], type, part_types.count(type)])
+
+
+## Optional slot fields: role (text), pass_through (true/false) and requires
+## (other slots of this mission that must be filled first, with no loops).
+func _read_slot_options(full_id: String, slots: Dictionary) -> void:
+	for path in slots:
+		var slot = slots[path]
+		if typeof(slot) != TYPE_DICTIONARY:
+			continue
+		if slot.has("role") and typeof(slot.role) != TYPE_STRING:
+			errors.append('%s: slot "%s" role must be text' % [full_id, path])
+		if slot.has("pass_through") and typeof(slot.pass_through) != TYPE_BOOL:
+			errors.append('%s: slot "%s" pass_through must be true or false' % [full_id, path])
+		var needs = slot.get("requires", [])
+		if typeof(needs) != TYPE_ARRAY:
+			errors.append('%s: slot "%s" requires must be a list of slot paths' % [full_id, path])
+			continue
+		for need in needs:
+			if not slots.has(need):
+				errors.append('%s: slot "%s" requires "%s", which isn\'t a slot in this mission' % [full_id, path, need])
+	# A loop (a needs b, b needs a) could never be finished.
+	for path in slots:
+		if _requires_loop(slots, path, path, {}):
+			errors.append('%s: slot "%s" is in a requires loop' % [full_id, path])
+
+
+## True when following `requires` from `at` leads back to `start`.
+func _requires_loop(slots: Dictionary, start: String, at: String, seen: Dictionary) -> bool:
+	if typeof(slots[at]) != TYPE_DICTIONARY or typeof(slots[at].get("requires", [])) != TYPE_ARRAY:
+		return false
+	for need in slots[at].get("requires", []):
+		if need == start:
+			return true
+		if slots.has(need) and not seen.has(need):
+			seen[need] = true
+			if _requires_loop(slots, start, need, seen):
+				return true
+	return false
 
 
 static func _is_id(value) -> bool:

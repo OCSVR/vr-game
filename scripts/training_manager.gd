@@ -29,6 +29,10 @@ var duration_s := 0
 var attempts := 1
 ## Overridable clock (milliseconds), so tests can control time.
 var now_ms: Callable = Time.get_ticks_msec
+## After a mission ends, open the next one in the registry's order on its own.
+## Tests turn this off.
+var auto_advance := true
+var advance_delay_s := 6.0
 var _started_ms := 0
 
 
@@ -62,6 +66,15 @@ func begin(full_id: String) -> Dictionary:
 	_set_state(State.INTRO)
 	mission_started.emit(full_id)
 	return mission
+
+
+## The mission after `full_id` in its module, by registry order, or "" if it's the last.
+func next_mission_id(full_id: String) -> String:
+	for module in registry.modules:
+		var at: int = module.mission_ids.find(full_id)
+		if at != -1:
+			return module.mission_ids[at + 1] if at + 1 < module.mission_ids.size() else ""
+	return ""
 
 
 ## The student picked something up. The first grab starts the mission's clock.

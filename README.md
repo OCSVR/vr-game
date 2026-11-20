@@ -8,7 +8,7 @@ The work follows the team build plan (`OCSVR_Training_Plan.md` section 5 in the 
 
 1. Install **Godot 4.7.2 standard** (not .NET). Setup guides with the exact versions are in the team Drive: `OCSVR_Godot_Setup_Windows.md` and `OCSVR_Godot_Setup_macOS.md`.
 2. Clone this repo and open `project.godot` from Godot's project manager (**Import**).
-3. Press **Play** (F5). The "Identify components" mission opens. (The step 1 sandbox is `scenes/workbench.tscn`; open it and press F6 to play just that scene.)
+3. Press **Play** (F5). Module 1 starts with the "Install the RAM" practice mission, and each finished mission opens the next one after 6 seconds. To play one mission on its own, open its scene and press F6.
 
 ## Status
 
@@ -17,6 +17,7 @@ The work follows the team build plan (`OCSVR_Training_Plan.md` section 5 in the 
 | 1. Laptop workbench + one snap task | **Done:** drag the RAM stick into the RAM slot with the mouse |
 | 2. One full mission ("Identify components") with hints and a success panel | **Done:** CPU, RAM, SSD and keyboard into their places, checklist and hints on a 3D panel, score/time/attempts on success |
 | 4. `TrainingManager` autoload + module registry | **Done:** missions are data in `data/modules.json`; one generic mission script |
+| Module 1 missions | **4 of 5:** Install the RAM (practice), Identify the components, Assemble the system, Execute a task. Left: the two advanced ones (CPU vs GPU, diagnose a failure) |
 | 5. Send scores to Flask | **Done:** each finished mission is saved through the training API (sign in, start a session, complete it with retries) |
 | OpenXR, Quest export preset, vendors plugin | Being set up by Aryan's side; they get added here |
 
@@ -33,6 +34,8 @@ The work follows the team build plan (`OCSVR_Training_Plan.md` section 5 in the 
 | `scripts/net/training_api.gd` | The HTTP client for the backend's `/api/authenticate`, `/api/sessions/start`, `/api/sessions/complete` and `/api/learners/<uid>/progress`. Sends the login JWT as `Authorization: Bearer` |
 | `scripts/missions/mission.gd` | The one script every mission scene uses: gives the scene's parts and slots their registry data and drives the panel |
 | `scripts/ui/info_panel.gd` | A 3D panel (SubViewport on a quad) for intros, checklists, hints and results |
+| `scenes/build_computer/assemble_system.tscn` | Module 1, mission 3: mount the motherboard, PSU and SSD in a case, power last |
+| `scenes/build_computer/execute_task.tscn` | Module 1, mission 4: carry a photo file from the SSD to RAM, the CPU, then the screen |
 | `scenes/workbench.tscn` | The "Install the RAM" practice mission (step 1's workbench, now registry-only) |
 | `scripts/grabbable_part.gd` | A part you can pick up. Knows its `part_type`; on a drop it picks the one slot that judges it (so a keyboard over three slots is one mistake, not three); goes home if not installed |
 | `scripts/snap_zone.gd` | A slot (`Area3D`) with a `hint`. It judges a dropped part: right type → installs it and emits `snapped`; wrong type → emits `rejected` |
@@ -73,7 +76,12 @@ Never commit a password. With no account set up, the game still plays, and the s
 
 1. Make a scene: instance `scenes/room.tscn`, add `InfoPanel` (`scripts/ui/info_panel.gd`), and place your parts (`scripts/grabbable_part.gd`, a `Mesh` child and a collision shape, origin at the snap point) and slots (`scripts/snap_zone.gd`, an `Area3D` with a collision shape and a `SnapPoint` marker).
 2. Put `scripts/missions/mission.gd` on the scene's root and set `mission_id` to `module.mission`.
-3. Add the mission to `data/modules.json`: its scene, `intro`, `success`, `scoring`, and every part (`type`, `name`) and slot (`accepts`, `name`, `hint`) by node path.
+3. Add the mission to `data/modules.json`: its scene, `intro`, `success`, `scoring`, and every part (`type`, `name`) and slot (`accepts`, `name`, `hint`) by node path. Slots can also have:
+   - `role`: what the part does, shown when it's installed
+   - `requires`: other slots that must be filled first (a part dropped too early is a mistake, and the panel says what comes first)
+   - `pass_through: true`: the part is placed here but stays free to move on, so it can go through several stages, like data moving through the computer
+
+   Missions play in the order they're listed.
 
 No new code is needed. If the registry and the scene disagree (a slot in one but not the other, a slot that accepts a type no part has), the game prints exactly what's wrong when it loads.
 
