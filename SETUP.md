@@ -28,10 +28,10 @@ You don't need the export templates, Java or the Android SDK to play on the lapt
 
 ### 2. Get the project
 
-You need [Git](https://git-scm.com/downloads) and access to the OCSVR GitHub org (ask Aryan). Clone it somewhere **not** synced by iCloud or OneDrive:
+You need [Git](https://git-scm.com/downloads) and access to the team's repos in the Open Coding Society GitHub org (ask Yash or Aryan). Clone it somewhere **not** synced by iCloud or OneDrive:
 
 ```bash
-git clone https://github.com/OCSVR/vr-game.git
+git clone https://github.com/Open-Coding-Society/vr-game.git
 cd vr-game
 git switch module-1-advanced
 ```
@@ -76,10 +76,10 @@ Each one should end with **`ALL PASSED`** (85 and 21 checks today). Read that li
 
 ## B. Save scores to your own backend (optional)
 
-The game saves each finished mission through the training API in [OCSVR/ocs_backend](https://github.com/OCSVR/ocs_backend). To see that on your computer, run the backend locally. You need Python 3.10 or newer (on Windows, do this part in WSL Ubuntu).
+The game saves each finished mission through the training API in [Open-Coding-Society/ocs_backend](https://github.com/Open-Coding-Society/ocs_backend). To see that on your computer, run the backend locally. You need Python 3.10 or newer (on Windows, do this part in WSL Ubuntu).
 
 ```bash
-git clone https://github.com/OCSVR/ocs_backend.git
+git clone https://github.com/Open-Coding-Society/ocs_backend.git
 cd ocs_backend
 python3 -m venv venv
 source venv/bin/activate
@@ -139,10 +139,10 @@ It should end with `ALL PASSED` (it adds a real session for `hop`).
 
 ## C. The progress page on the pages site (optional)
 
-The page is in pull request [OCSVR/ocs_frontend#1](https://github.com/OCSVR/ocs_frontend/pull/1), branch `vr-progress-page`. It needs the backend from part B running, plus Ruby, Bundler and Python (the [OCS pages README](https://github.com/OCSVR/ocs_frontend#readme) covers installing them).
+The page is in pull request [Open-Coding-Society/ocs_frontend#1](https://github.com/Open-Coding-Society/ocs_frontend/pull/1), branch `vr-progress-page`. It needs the backend from part B running, plus Ruby, Bundler and Python (the [OCS pages README](https://github.com/Open-Coding-Society/ocs_frontend#readme) covers installing them).
 
 ```bash
-git clone https://github.com/OCSVR/ocs_frontend.git
+git clone https://github.com/Open-Coding-Society/ocs_frontend.git
 cd ocs_frontend
 git switch vr-progress-page
 python3 -m venv venv && ./venv/bin/pip install -r requirements.txt

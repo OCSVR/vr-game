@@ -1,6 +1,6 @@
 # OCS VR: the Godot project
 
-Immersive training for **AP CSP Unit 4** (Computer Systems and Networks), built in **Godot 4.7.2** for the **Meta Quest**: students build a computer, then a network, and each mission's score is saved to the team's Flask backend ([OCSVR/ocs_backend](https://github.com/OCSVR/ocs_backend)).
+Immersive training for **AP CSP Unit 4** (Computer Systems and Networks), built in **Godot 4.7.2** for the **Meta Quest**: students build a computer, then a network, and each mission's score is saved to the team's Flask backend ([Open-Coding-Society/ocs_backend](https://github.com/Open-Coding-Society/ocs_backend)).
 
 The work follows the team build plan (`OCSVR_Training_Plan.md` section 5 in the team Drive): laptop first, then the Quest.
 
@@ -59,7 +59,7 @@ The VR rules from the build plan, and where they show up:
 
 ## Save scores to the backend
 
-The game sends results to the team's Flask backend ([OCSVR/ocs_backend](https://github.com/OCSVR/ocs_backend)), and they show up in `GET /api/learners/<uid>/progress` and on the pages site's `/vr/progress/`. Point it at a server and an **activated** account, either with environment variables:
+The game sends results to the team's Flask backend ([Open-Coding-Society/ocs_backend](https://github.com/Open-Coding-Society/ocs_backend)), and they show up in `GET /api/learners/<uid>/progress` and on the pages site's `/vr/progress/`. Point it at a server and an **activated** account, either with environment variables:
 
 ```bash
 OCSVR_API_URL=http://localhost:8587 OCSVR_UID=hop OCSVR_PASSWORD=... godot --path .
