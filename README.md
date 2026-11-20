@@ -4,6 +4,8 @@ Immersive training for **AP CSP Unit 4** (Computer Systems and Networks), built 
 
 The work follows the team build plan (`OCSVR_Training_Plan.md` section 5 in the team Drive): laptop first, then the Quest.
 
+**New to the project? Start with [SETUP.md](SETUP.md)**: installing Godot, cloning, playing, running the checks, and (optionally) the backend and the progress page.
+
 ## Open it
 
 1. Install **Godot 4.7.2 standard** (not .NET). Setup guides with the exact versions are in the team Drive: `OCSVR_Godot_Setup_Windows.md` and `OCSVR_Godot_Setup_macOS.md`.
