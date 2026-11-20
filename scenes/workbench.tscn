@@ -1,0 +1,136 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/workbench.gd" id="1_workbench"]
+[ext_resource type="Script" path="res://scripts/grabbable_part.gd" id="2_part"]
+[ext_resource type="Script" path="res://scripts/snap_zone.gd" id="3_zone"]
+[ext_resource type="Script" path="res://scripts/input/mouse_grabber.gd" id="4_grabber"]
+
+[sub_resource type="Environment" id="Environment_room"]
+background_mode = 1
+background_color = Color(0.11, 0.12, 0.15, 1)
+ambient_light_source = 2
+ambient_light_color = Color(1, 1, 1, 1)
+ambient_light_energy = 0.45
+
+[sub_resource type="StandardMaterial3D" id="Mat_floor"]
+albedo_color = Color(0.32, 0.33, 0.36, 1)
+
+[sub_resource type="PlaneMesh" id="Mesh_floor"]
+material = SubResource("Mat_floor")
+size = Vector2(6, 6)
+
+[sub_resource type="StandardMaterial3D" id="Mat_table"]
+albedo_color = Color(0.55, 0.42, 0.3, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_table"]
+material = SubResource("Mat_table")
+size = Vector3(1.2, 0.05, 0.7)
+
+[sub_resource type="BoxShape3D" id="Shape_table"]
+size = Vector3(1.2, 0.05, 0.7)
+
+[sub_resource type="StandardMaterial3D" id="Mat_board"]
+albedo_color = Color(0.1, 0.35, 0.2, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_board"]
+material = SubResource("Mat_board")
+size = Vector3(0.305, 0.004, 0.244)
+
+[sub_resource type="BoxShape3D" id="Shape_board"]
+size = Vector3(0.305, 0.004, 0.244)
+
+[sub_resource type="StandardMaterial3D" id="Mat_slot"]
+albedo_color = Color(0.08, 0.08, 0.09, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_slot"]
+material = SubResource("Mat_slot")
+size = Vector3(0.145, 0.008, 0.008)
+
+[sub_resource type="BoxShape3D" id="Shape_slot_zone"]
+size = Vector3(0.17, 0.12, 0.06)
+
+[sub_resource type="StandardMaterial3D" id="Mat_ram"]
+albedo_color = Color(0.2, 0.45, 0.85, 1)
+
+[sub_resource type="BoxMesh" id="Mesh_ram"]
+material = SubResource("Mat_ram")
+size = Vector3(0.133, 0.031, 0.004)
+
+[sub_resource type="BoxShape3D" id="Shape_ram"]
+size = Vector3(0.133, 0.031, 0.012)
+
+[node name="Workbench" type="Node3D"]
+script = ExtResource("1_workbench")
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="."]
+environment = SubResource("Environment_room")
+
+[node name="Sun" type="DirectionalLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 0.6428, 0.766, 0, -0.766, 0.6428, 0, 3, 0)
+shadow_enabled = true
+
+[node name="Floor" type="MeshInstance3D" parent="."]
+mesh = SubResource("Mesh_floor")
+
+[node name="Table" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.875, 0)
+
+[node name="Mesh" type="MeshInstance3D" parent="Table"]
+mesh = SubResource("Mesh_table")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Table"]
+shape = SubResource("Shape_table")
+
+[node name="Motherboard" type="StaticBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.902, -0.05)
+
+[node name="Mesh" type="MeshInstance3D" parent="Motherboard"]
+mesh = SubResource("Mesh_board")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Motherboard"]
+shape = SubResource("Shape_board")
+
+[node name="RamSlot" type="Area3D" parent="Motherboard"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.06, 0.002, 0)
+script = ExtResource("3_zone")
+accepts = &"ram"
+display_name = "RAM slot"
+
+[node name="Mesh" type="MeshInstance3D" parent="Motherboard/RamSlot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.004, 0)
+mesh = SubResource("Mesh_slot")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Motherboard/RamSlot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.06, 0)
+shape = SubResource("Shape_slot_zone")
+
+[node name="SnapPoint" type="Marker3D" parent="Motherboard/RamSlot"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.004, 0)
+
+[node name="RamStick" type="RigidBody3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.35, 0.9, 0.15)
+script = ExtResource("2_part")
+part_type = &"ram"
+display_name = "RAM stick"
+
+[node name="Mesh" type="MeshInstance3D" parent="RamStick"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0155, 0)
+mesh = SubResource("Mesh_ram")
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="RamStick"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0155, 0)
+shape = SubResource("Shape_ram")
+
+[node name="Camera3D" type="Camera3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0.55)
+fov = 60.0
+
+[node name="Sign" type="Label3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.12, -0.36)
+pixel_size = 0.0007
+text = "Drag the RAM stick into the RAM slot"
+font_size = 48
+outline_size = 8
+
+[node name="MouseGrabber" type="Node" parent="."]
+script = ExtResource("4_grabber")
