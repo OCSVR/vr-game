@@ -9,7 +9,6 @@ Everything a teammate needs to get the game (and, if you want, the backend and t
 | C. The progress page | The pages site's `/vr/progress/` page showing those scores | ~20 min |
 | D. Building for the Quest | The Android/Quest tools | Follow the team Drive guide |
 
-> **Branches, for now.** The work is in a stack of pull requests waiting for Aryan to merge (#1 → #6). Until they're merged, `main` is nearly empty, so use the branch **`module-1-advanced`**, which has all of them. Once they're merged, use `main` and skip the `git switch` steps below.
 
 ---
 
@@ -33,7 +32,6 @@ You need [Git](https://git-scm.com/downloads) and access to the team's repos in 
 ```bash
 git clone https://github.com/Open-Coding-Society/vr-game.git
 cd vr-game
-git switch module-1-advanced
 ```
 
 ### 3. Open and play
