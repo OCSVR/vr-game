@@ -20,6 +20,10 @@ var zones: Array[SnapZone] = []
 var parts: Array[GrabbablePart] = []
 ## Where the mission's problems go (also printed as errors), for tests.
 var problems: PackedStringArray = []
+## The success panel's lines and the score-saving status under them. Either
+## can arrive first: a fast server can answer before the panel is drawn.
+var _result_lines := PackedStringArray()
+var _save_message := ""
 
 @onready var panel: InfoPanel = $InfoPanel
 @onready var manager: Node = get_node("/root/TrainingManager")
@@ -37,6 +41,9 @@ func _ready() -> void:
 		zone.snapped.connect(_on_snapped)
 		zone.rejected.connect(_on_rejected)
 	manager.module_completed.connect(_on_module_completed)
+	var reporter := get_node_or_null("/root/ScoreReporter")
+	if reporter:
+		reporter.report_finished.connect(_on_report_finished)
 	panel.show_text(config.title, PackedStringArray(config.intro))
 
 
@@ -94,8 +101,21 @@ func _on_rejected(zone: SnapZone, part: GrabbablePart) -> void:
 
 
 func _on_module_completed(_module_id: String, score: int, duration_s: int) -> void:
-	var out := PackedStringArray(config.success)
-	out.append("Score: %d   Time: %s   Mistakes: %d" % [score, _clock(duration_s), manager.mistakes])
+	_result_lines = PackedStringArray(config.success)
+	_result_lines.append("Score: %d   Time: %s   Mistakes: %d" % [score, _clock(duration_s), manager.mistakes])
+	_show_result()
+
+
+func _on_report_finished(_ok: bool, message: String) -> void:
+	_save_message = message
+	if not _result_lines.is_empty() and is_inside_tree():
+		_show_result()
+
+
+func _show_result() -> void:
+	var out := _result_lines.duplicate()
+	if not config.practice:
+		out.append(_save_message if _save_message != "" else "Saving your score...")
 	panel.show_text("Mission complete!", out)
 
 

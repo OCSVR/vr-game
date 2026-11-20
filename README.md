@@ -17,6 +17,7 @@ The work follows the team build plan (`OCSVR_Training_Plan.md` section 5 in the 
 | 1. Laptop workbench + one snap task | **Done:** drag the RAM stick into the RAM slot with the mouse |
 | 2. One full mission ("Identify components") with hints and a success panel | **Done:** CPU, RAM, SSD and keyboard into their places, checklist and hints on a 3D panel, score/time/attempts on success |
 | 4. `TrainingManager` autoload + module registry | **Done:** missions are data in `data/modules.json`; one generic mission script |
+| 5. Send scores to Flask | **Done:** each finished mission is saved through the training API (sign in, start a session, complete it with retries) |
 | OpenXR, Quest export preset, vendors plugin | Being set up by Aryan's side; they get added here |
 
 ## How it fits together
@@ -28,6 +29,8 @@ The work follows the team build plan (`OCSVR_Training_Plan.md` section 5 in the 
 | `data/modules.json` | **The module registry**: every module and mission, with its scene, intro and success text, scoring, and each part's and slot's type, name and hint |
 | `scripts/module_registry.gd` | Reads and checks the registry; a typo is reported with the field that's wrong |
 | `scripts/training_manager.gd` | **The `TrainingManager` autoload**: Intro → Active (first grab starts the clock) → Success; mistakes, score, attempts; emits `module_completed(module_id, score, duration_s)` |
+| `scripts/net/score_reporter.gd` | **The `ScoreReporter` autoload**: on `mission_started` it starts a server session; on `module_completed` it completes it with score, time, attempts and device, retrying if the server can't be reached. Practice missions aren't sent |
+| `scripts/net/training_api.gd` | The HTTP client for the backend's `/api/authenticate`, `/api/sessions/start`, `/api/sessions/complete` and `/api/learners/<uid>/progress`. Sends the login JWT as `Authorization: Bearer` |
 | `scripts/missions/mission.gd` | The one script every mission scene uses: gives the scene's parts and slots their registry data and drives the panel |
 | `scripts/ui/info_panel.gd` | A 3D panel (SubViewport on a quad) for intros, checklists, hints and results |
 | `scenes/workbench.tscn` | The "Install the RAM" practice mission (step 1's workbench, now registry-only) |
@@ -47,6 +50,25 @@ The VR rules from the build plan, and where they show up:
 7. **Model setup.** Each part is a body with logic and a simple collision shape, with its mesh as a child named `Mesh`, so a `.glb` model swaps in by replacing that child.
 8. **Origin at the snap point.** The RAM stick's origin is its bottom edge, and each SnapZone has a `SnapPoint` marker.
 
+## Save scores to the backend
+
+The game sends results to the team's Flask backend ([OCSVR/ocs_backend](https://github.com/OCSVR/ocs_backend)), and they show up in `GET /api/learners/<uid>/progress` and on the pages site's `/vr/progress/`. Point it at a server and an **activated** account, either with environment variables:
+
+```bash
+OCSVR_API_URL=http://localhost:8587 OCSVR_UID=hop OCSVR_PASSWORD=... godot --path .
+```
+
+or with a file that stays on your computer, `user://ocsvr_api.cfg` (on a Mac, `~/Library/Application Support/Godot/app_userdata/OCSVR/ocsvr_api.cfg`):
+
+```ini
+[api]
+base_url="http://localhost:8587"
+uid="hop"
+password="..."
+```
+
+Never commit a password. With no account set up, the game still plays, and the success panel says the score wasn't saved. On the Quest, `adb reverse tcp:8587 tcp:8587` makes the headset's `localhost:8587` reach the laptop's backend.
+
 ## Add a mission
 
 1. Make a scene: instance `scenes/room.tscn`, add `InfoPanel` (`scripts/ui/info_panel.gd`), and place your parts (`scripts/grabbable_part.gd`, a `Mesh` child and a collision shape, origin at the snap point) and slots (`scripts/snap_zone.gd`, an `Area3D` with a collision shape and a `SnapPoint` marker).
@@ -61,8 +83,13 @@ From the repo folder, with `godot` meaning your Godot 4.7.2 binary:
 
 ```bash
 godot --headless --import
-godot --headless --script res://tests/run_tests.gd
+godot --headless --script res://tests/run_tests.gd       # game: snap rules, missions, registry
+godot --headless --script res://tests/run_api_tests.gd   # score saving, against a fake server
 ```
+
+Look for `ALL PASSED` at the end. Godot exits with 0 even if a test script fails to load, so the exit code alone isn't enough.
+
+With the backend running, `tests/run_live_api_test.gd` does one real round trip (set the three `OCSVR_` variables above; without them it prints `SKIPPED`). It creates real sessions for that account.
 
 They check the registry (it loads, and bad data is caught with a clear message), the TrainingManager's states and scoring, the snap rules, and both missions played through the real mouse grabber and camera. For example: a perfect run scores 100 with the right time, wrong drops show the slot's hint and cost points, a big part over several slots counts once, and changing `per_mistake` in the registry changes the score with no code change. Exit code 0 means all passed. A few `ERROR` lines are expected: they come from tests that feed in bad data on purpose.
 

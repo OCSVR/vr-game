@@ -18,6 +18,7 @@ config/features=PackedStringArray("4.7", "Mobile")
 [autoload]
 
 TrainingManager="*res://scripts/training_manager.gd"
+ScoreReporter="*res://scripts/net/score_reporter.gd"
 
 [display]
 
