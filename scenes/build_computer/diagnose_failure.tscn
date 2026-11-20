@@ -5,114 +5,39 @@
 [ext_resource type="Script" path="res://scripts/grabbable_part.gd" id="3_part"]
 [ext_resource type="Script" path="res://scripts/snap_zone.gd" id="4_zone"]
 [ext_resource type="Script" path="res://scripts/ui/info_panel.gd" id="5_panel"]
+[ext_resource type="PackedScene" path="res://models/board/board_visual.tscn" id="v_board"]
+[ext_resource type="PackedScene" path="res://models/monitor/monitor_visual.tscn" id="v_monitor"]
+[ext_resource type="PackedScene" path="res://models/ram/ram_visual.tscn" id="v_ram"]
+[ext_resource type="PackedScene" path="res://models/ssd_m2/ssd_m2_visual.tscn" id="v_ssd_m2"]
+[ext_resource type="PackedScene" path="res://models/cpu/cpu_visual.tscn" id="v_cpu"]
+[ext_resource type="PackedScene" path="res://models/psu/psu_visual.tscn" id="v_psu"]
 
-[sub_resource type="StandardMaterial3D" id="Mat_1"]
-albedo_color = Color(0.1, 0.35, 0.2, 1)
-
-[sub_resource type="BoxMesh" id="Mesh_1"]
-material = SubResource("Mat_1")
+[sub_resource type="BoxShape3D" id="R1"]
 size = Vector3(0.305, 0.004, 0.244)
 
-[sub_resource type="StandardMaterial3D" id="Mat_2"]
-albedo_color = Color(0.08, 0.08, 0.09, 1)
+[sub_resource type="BoxShape3D" id="R2"]
+size = Vector3(0.17, 0.12, 0.03)
 
-[sub_resource type="BoxMesh" id="Mesh_2"]
-material = SubResource("Mat_2")
-size = Vector3(0.04, 0.1, 0.04)
+[sub_resource type="BoxShape3D" id="R3"]
+size = Vector3(0.04, 0.12, 0.11)
 
-[sub_resource type="StandardMaterial3D" id="Mat_3"]
-albedo_color = Color(0.02, 0.02, 0.03, 1)
+[sub_resource type="BoxShape3D" id="R4"]
+size = Vector3(0.06, 0.12, 0.05)
 
-[sub_resource type="BoxMesh" id="Mesh_3"]
-material = SubResource("Mat_3")
-size = Vector3(0.32, 0.19, 0.015)
-
-[sub_resource type="StandardMaterial3D" id="Mat_4"]
-albedo_color = Color(0.08, 0.08, 0.09, 1)
-
-[sub_resource type="BoxMesh" id="Mesh_4"]
-material = SubResource("Mat_4")
-size = Vector3(0.145, 0.008, 0.008)
-
-[sub_resource type="StandardMaterial3D" id="Mat_5"]
-albedo_color = Color(0.2, 0.45, 0.85, 1)
-
-[sub_resource type="BoxMesh" id="Mesh_5"]
-material = SubResource("Mat_5")
-size = Vector3(0.133, 0.031, 0.004)
-
-[sub_resource type="BoxShape3D" id="Shape_6"]
-size = Vector3(0.17, 0.12, 0.06)
-
-[sub_resource type="StandardMaterial3D" id="Mat_7"]
-albedo_color = Color(0.15, 0.15, 0.18, 1)
-
-[sub_resource type="BoxMesh" id="Mesh_7"]
-material = SubResource("Mat_7")
-size = Vector3(0.022, 0.003, 0.08)
-
-[sub_resource type="BoxShape3D" id="Shape_8"]
-size = Vector3(0.06, 0.12, 0.11)
-
-[sub_resource type="StandardMaterial3D" id="Mat_9"]
-albedo_color = Color(0.6, 0.62, 0.66, 1)
-
-[sub_resource type="BoxMesh" id="Mesh_9"]
-material = SubResource("Mat_9")
-size = Vector3(0.0375, 0.004, 0.0375)
-
-[sub_resource type="BoxShape3D" id="Shape_10"]
-size = Vector3(0.08, 0.12, 0.08)
-
-[sub_resource type="StandardMaterial3D" id="Mat_11"]
-albedo_color = Color(0.15, 0.15, 0.17, 1)
-
-[sub_resource type="BoxMesh" id="Mesh_11"]
-material = SubResource("Mat_11")
-size = Vector3(0.15, 0.086, 0.14)
-
-[sub_resource type="BoxShape3D" id="Shape_12"]
+[sub_resource type="BoxShape3D" id="R5"]
 size = Vector3(0.17, 0.14, 0.16)
 
-[sub_resource type="StandardMaterial3D" id="Mat_13"]
-albedo_color = Color(0.2, 0.45, 0.85, 1)
+[sub_resource type="BoxShape3D" id="R6"]
+size = Vector3(0.133, 0.0314, 0.012)
 
-[sub_resource type="BoxMesh" id="Mesh_13"]
-material = SubResource("Mat_13")
-size = Vector3(0.133, 0.031, 0.004)
-
-[sub_resource type="BoxShape3D" id="Shape_14"]
-size = Vector3(0.133, 0.031, 0.012)
-
-[sub_resource type="StandardMaterial3D" id="Mat_15"]
-albedo_color = Color(0.15, 0.15, 0.18, 1)
-
-[sub_resource type="BoxMesh" id="Mesh_15"]
-material = SubResource("Mat_15")
-size = Vector3(0.022, 0.003, 0.08)
-
-[sub_resource type="BoxShape3D" id="Shape_16"]
+[sub_resource type="BoxShape3D" id="R7"]
 size = Vector3(0.022, 0.01, 0.08)
 
-[sub_resource type="StandardMaterial3D" id="Mat_17"]
-albedo_color = Color(0.6, 0.62, 0.66, 1)
-
-[sub_resource type="BoxMesh" id="Mesh_17"]
-material = SubResource("Mat_17")
-size = Vector3(0.0375, 0.004, 0.0375)
-
-[sub_resource type="BoxShape3D" id="Shape_18"]
+[sub_resource type="BoxShape3D" id="R8"]
 size = Vector3(0.0375, 0.012, 0.0375)
 
-[sub_resource type="StandardMaterial3D" id="Mat_19"]
-albedo_color = Color(0.15, 0.15, 0.17, 1)
-
-[sub_resource type="BoxMesh" id="Mesh_19"]
-material = SubResource("Mat_19")
-size = Vector3(0.15, 0.086, 0.14)
-
-[sub_resource type="BoxShape3D" id="Shape_20"]
-size = Vector3(0.15, 0.086, 0.14)
+[sub_resource type="BoxShape3D" id="R9"]
+size = Vector3(0.15, 0.086, 0.09)
 
 [node name="DiagnoseFailure" type="Node3D"]
 script = ExtResource("1_mission")
@@ -120,78 +45,69 @@ mission_id = "build_computer.diagnose_failure"
 
 [node name="Room" parent="." instance=ExtResource("2_room")]
 
-[node name="Board" type="MeshInstance3D" parent="."]
+[node name="Board" type="StaticBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.902, -0.05)
-mesh = SubResource("Mesh_1")
 
-[node name="MonitorStand" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.35, 0.95, -0.14)
-mesh = SubResource("Mesh_2")
+[node name="Mesh" parent="Board" instance=ExtResource("v_board")]
 
-[node name="MonitorScreen" type="MeshInstance3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.35, 1.06, -0.14)
-mesh = SubResource("Mesh_3")
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Board"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
+shape = SubResource("R1")
+
+[node name="Monitor" parent="." instance=ExtResource("v_monitor")]
+transform = Transform3D(0.7071, 0, 0.7071, 0, 1, 0, -0.7071, 0, 0.7071, -0.47, 0.9, 0.0)
 
 [node name="RamProblem" type="Area3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.07, 0.904, -0.08)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.059, 0.9035, 0.009999999999999995)
 script = ExtResource("4_zone")
 
-[node name="Mesh" type="MeshInstance3D" parent="RamProblem"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.004, 0)
-mesh = SubResource("Mesh_4")
-
-[node name="Replaced" type="MeshInstance3D" parent="RamProblem"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0195, 0)
-mesh = SubResource("Mesh_5")
+[node name="Replaced" parent="RamProblem" instance=ExtResource("v_ram")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0045000000000000005, 0)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="RamProblem"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.06, 0)
-shape = SubResource("Shape_6")
+shape = SubResource("R2")
 
 [node name="SnapPoint" type="Marker3D" parent="RamProblem"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.004, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0045000000000000005, 0)
 
 [node name="DriveProblem" type="Area3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.0, 0.904, 0.02)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.014, 0.9035, -0.079)
 script = ExtResource("4_zone")
 
-[node name="Replaced" type="MeshInstance3D" parent="DriveProblem"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0025, 0)
-mesh = SubResource("Mesh_7")
+[node name="Replaced" parent="DriveProblem" instance=ExtResource("v_ssd_m2")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0015, 0)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="DriveProblem"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.06, 0)
-shape = SubResource("Shape_8")
+shape = SubResource("R3")
 
 [node name="SnapPoint" type="Marker3D" parent="DriveProblem"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.001, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0015, 0)
 
 [node name="CpuCheck" type="Area3D" parent="."]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.06, 0.904, -0.08)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.056, 0.9035, -0.042)
 script = ExtResource("4_zone")
 
-[node name="Chip" type="MeshInstance3D" parent="CpuCheck"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.002, 0)
-mesh = SubResource("Mesh_9")
+[node name="Chip" parent="CpuCheck" instance=ExtResource("v_cpu")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0029999999999999996, 0)
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="CpuCheck"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.06, 0)
-shape = SubResource("Shape_10")
+shape = SubResource("R4")
 
 [node name="SnapPoint" type="Marker3D" parent="CpuCheck"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.002, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0029999999999999996, 0)
 
 [node name="PsuCheck" type="Area3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.32, 0.9, -0.1)
 script = ExtResource("4_zone")
 
-[node name="Box" type="MeshInstance3D" parent="PsuCheck"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.043, 0)
-mesh = SubResource("Mesh_11")
+[node name="Box" parent="PsuCheck" instance=ExtResource("v_psu")]
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="PsuCheck"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.06, 0)
-shape = SubResource("Shape_12")
+shape = SubResource("R5")
 
 [node name="SnapPoint" type="Marker3D" parent="PsuCheck"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
@@ -200,16 +116,14 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0)
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.42, 0.9, 0.22)
 script = ExtResource("3_part")
 
-[node name="Mesh" type="MeshInstance3D" parent="Ram"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0155, 0)
-mesh = SubResource("Mesh_13")
+[node name="Mesh" parent="Ram" instance=ExtResource("v_ram")]
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Ram"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0155, 0)
-shape = SubResource("Shape_14")
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0157, 0)
+shape = SubResource("R6")
 
 [node name="Name" type="Label3D" parent="Ram"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.061, 0)
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.061399999999999996, 0)
 billboard = 1
 pixel_size = 0.0004
 font_size = 48
@@ -219,13 +133,11 @@ outline_size = 10
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.25, 0.9, 0.24)
 script = ExtResource("3_part")
 
-[node name="Mesh" type="MeshInstance3D" parent="Ssd"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0015, 0)
-mesh = SubResource("Mesh_15")
+[node name="Mesh" parent="Ssd" instance=ExtResource("v_ssd_m2")]
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Ssd"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.005, 0)
-shape = SubResource("Shape_16")
+shape = SubResource("R7")
 
 [node name="Name" type="Label3D" parent="Ssd"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.06, 0)
@@ -238,13 +150,11 @@ outline_size = 10
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -0.1, 0.9, 0.24)
 script = ExtResource("3_part")
 
-[node name="Mesh" type="MeshInstance3D" parent="Cpu"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.002, 0)
-mesh = SubResource("Mesh_17")
+[node name="Mesh" parent="Cpu" instance=ExtResource("v_cpu")]
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Cpu"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.006, 0)
-shape = SubResource("Shape_18")
+shape = SubResource("R8")
 
 [node name="Name" type="Label3D" parent="Cpu"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.06, 0)
@@ -257,13 +167,11 @@ outline_size = 10
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.15, 0.9, 0.22)
 script = ExtResource("3_part")
 
-[node name="Mesh" type="MeshInstance3D" parent="Psu"]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.043, 0)
-mesh = SubResource("Mesh_19")
+[node name="Mesh" parent="Psu" instance=ExtResource("v_psu")]
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Psu"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.043, 0)
-shape = SubResource("Shape_20")
+shape = SubResource("R9")
 
 [node name="Name" type="Label3D" parent="Psu"]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.11599999999999999, 0)

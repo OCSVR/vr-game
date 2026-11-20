@@ -1,0 +1,11 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/model_visual.gd" id="1_vw5m5"]
+[ext_resource type="PackedScene" path="res://models/desk/metal_office_desk_1k.gltf" id="2_1ls5t"]
+
+[node name="DeskVisual" type="Node3D" unique_id=299060803]
+script = ExtResource("1_vw5m5")
+hide_nodes = PackedStringArray()
+
+[node name="metal_office_desk_1k" type="Node3D" parent="." unique_id=992086636 instance=ExtResource("2_1ls5t")]
+transform = Transform3D(0.6, 0, 0, 0, 1.142857, 0, 0, 0, 0.73902, 3.5762787e-07, 0, -0.0033230782)

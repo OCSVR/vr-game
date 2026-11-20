@@ -1,0 +1,11 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/model_visual.gd" id="1_6ol7a"]
+[ext_resource type="PackedScene" path="res://models/ram/ram.glb" id="2_avd1i"]
+
+[node name="RamVisual" type="Node3D" unique_id=257473161]
+script = ExtResource("1_6ol7a")
+hide_nodes = PackedStringArray()
+
+[node name="Sketchfab_Scene" type="Node3D" parent="." unique_id=2022621319 instance=ExtResource("2_avd1i")]
+transform = Transform3D(0.0007546622, 0, 0, 0, -3.298733e-11, 0.0007546622, 0, -0.0007546622, -3.298733e-11, 0, 0.015697313, -2.3283064e-09)

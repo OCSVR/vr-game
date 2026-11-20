@@ -1,0 +1,11 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/model_visual.gd" id="1_wftkm"]
+[ext_resource type="PackedScene" path="res://models/ssd_sata/ssd_sata.glb" id="2_0emam"]
+
+[node name="SsdSataVisual" type="Node3D" unique_id=2082602528]
+script = ExtResource("1_wftkm")
+hide_nodes = PackedStringArray()
+
+[node name="Sketchfab_Scene" type="Node3D" parent="." unique_id=2069628524 instance=ExtResource("2_0emam")]
+transform = Transform3D(0.012813384, 0, 0, 0, 0.012813384, 0, 0, 0, 0.012813384, -0.00018246472, 0.0058352146, -6.3329935e-08)

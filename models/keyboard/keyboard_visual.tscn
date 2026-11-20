@@ -1,0 +1,11 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/model_visual.gd" id="1_346rx"]
+[ext_resource type="PackedScene" path="res://models/keyboard/keyboard.glb" id="2_gjq4g"]
+
+[node name="KeyboardVisual" type="Node3D" unique_id=919051908]
+script = ExtResource("1_346rx")
+hide_nodes = PackedStringArray()
+
+[node name="Sketchfab_Scene" type="Node3D" parent="." unique_id=1402352240 instance=ExtResource("2_gjq4g")]
+transform = Transform3D(0.99169147, 0, 0, 0, 0.99169147, 0, 0, 0, 0.99169147, 0, 0.014985571, 0)
