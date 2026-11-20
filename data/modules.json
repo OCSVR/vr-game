@@ -203,6 +203,129 @@
               "role": "The pixels are sent to the screen, an output device."
             }
           }
+        },
+        {
+          "id": "add_capacity",
+          "title": "Add processing capacity",
+          "scene": "res://scenes/build_computer/add_capacity.tscn",
+          "intro": [
+            "Some jobs are a long list of steps. Others repeat the same math millions of times.",
+            "Install the graphics card (GPU), then send each job to the processor that's best at it: the CPU or the GPU."
+          ],
+          "success": [
+            "CPUs have a few fast cores for step-by-step work. GPUs have thousands of small cores that run the same math at the same time: that's parallel computing."
+          ],
+          "scoring": {
+            "full": 100,
+            "per_mistake": 10
+          },
+          "parts": {
+            "Gpu": {
+              "type": "gpu",
+              "name": "graphics card (GPU)"
+            },
+            "Pixels": {
+              "type": "parallel_job",
+              "name": "color 2M pixels"
+            },
+            "TrainAi": {
+              "type": "parallel_job",
+              "name": "train AI model"
+            },
+            "GameRules": {
+              "type": "serial_job",
+              "name": "game rules"
+            },
+            "Password": {
+              "type": "serial_job",
+              "name": "check password"
+            }
+          },
+          "slots": {
+            "GpuSlot": {
+              "accepts": "gpu",
+              "name": "graphics card slot",
+              "hint": "The long slot under the board's middle is for the graphics card (GPU).",
+              "role": "The GPU adds thousands of small cores for work that can be split up."
+            },
+            "CpuJobs": {
+              "accepts": "serial_job",
+              "name": "CPU jobs",
+              "capacity": 2,
+              "hint": "The CPU has a few very fast cores. It's best at jobs where each step depends on the last, like following a game's rules or checking a password.",
+              "role": "Step-by-step work goes to the CPU: each step needs the one before it."
+            },
+            "GpuJobs": {
+              "accepts": "parallel_job",
+              "name": "GPU jobs",
+              "capacity": 2,
+              "requires": [
+                "GpuSlot"
+              ],
+              "hint": "The GPU does the same math on many pieces at once. It's best at jobs that split into millions of identical parts, like coloring pixels or training an AI model.",
+              "role": "Work that splits into many identical pieces goes to the GPU, all at the same time."
+            }
+          }
+        },
+        {
+          "id": "diagnose_failure",
+          "title": "Diagnose a failure",
+          "scene": "res://scenes/build_computer/diagnose_failure.tscn",
+          "intro": [
+            "This computer won't start properly: when it turns on, it beeps and shows no picture.",
+            "Find the broken part and swap in the right spare from the table. Drop the spare on the part you think is broken."
+          ],
+          "success": [
+            "Fixed! Bad memory failed the start-up test, and a dead drive hid the operating system. Each part fails in its own way, which is how you can tell them apart."
+          ],
+          "scoring": {
+            "full": 100,
+            "per_mistake": 10
+          },
+          "parts": {
+            "Ram": {
+              "type": "ram",
+              "name": "spare RAM stick"
+            },
+            "Ssd": {
+              "type": "storage",
+              "name": "spare SSD"
+            },
+            "Cpu": {
+              "type": "cpu",
+              "name": "spare CPU"
+            },
+            "Psu": {
+              "type": "psu",
+              "name": "spare PSU"
+            }
+          },
+          "slots": {
+            "RamProblem": {
+              "accepts": "ram",
+              "name": "Problem 1: beeps, no picture",
+              "hint": "Beeping with no picture is the start-up memory test failing: nothing can run without working RAM.",
+              "role": "The new RAM passes the memory test. The computer starts... but now the screen says \"No boot device found\"."
+            },
+            "DriveProblem": {
+              "accepts": "storage",
+              "name": "Problem 2: \"No boot device found\"",
+              "requires": [
+                "RamProblem"
+              ],
+              "hint": "\"No boot device\" means the computer can't find the drive that holds the operating system: that's storage."
+            },
+            "CpuCheck": {
+              "working": true,
+              "name": "CPU",
+              "hint": "The CPU is fine: a dead CPU usually means no beeps at all, because nothing can run the start-up test."
+            },
+            "PsuCheck": {
+              "working": true,
+              "name": "power supply",
+              "hint": "The power supply is fine: the computer turns on and beeps, so it's getting power."
+            }
+          }
         }
       ]
     }

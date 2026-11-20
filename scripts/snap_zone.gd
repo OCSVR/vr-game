@@ -13,6 +13,13 @@ extends Area3D
 ## - `pass_through`: the part only passes through. It's placed here and the zone
 ##   counts as done, but the part stays free to carry on to the next zone, like
 ##   data moving from storage to memory to the CPU.
+## - `capacity`: how many parts it takes before it's full (a job queue takes
+##   several, side by side, `stack_spacing` apart along the SnapPoint's x axis).
+## - `working`: a part that isn't broken (Diagnose a failure). It never takes a
+##   part; anything dropped on it is turned away with its hint.
+##
+## A child named "Replaced" (e.g. the old, faulty part's mesh) is hidden once
+## the zone is full, so the new part doesn't sit on top of the old one.
 
 const GrabbablePart := preload("res://scripts/grabbable_part.gd")
 
@@ -35,8 +42,16 @@ signal blocked(zone, part)
 ## See above: the part is placed here and stays free to move on.
 @export var pass_through := false
 
+## How many parts fill this zone, and how far apart they sit (meters).
+@export var capacity := 1
+@export var stack_spacing := 0.05
+## See above: a part that works; nothing is installed here.
+@export var working := false
+
 ## Zones that must be filled before this one takes its part.
 var prerequisites: Array[Area3D] = []
+## Parts installed here, oldest first; `installed_part` is the latest.
+var installed_parts: Array[GrabbablePart] = []
 var installed_part: GrabbablePart = null
 
 @onready var _snap_point: Node3D = get_node_or_null("SnapPoint")
@@ -48,7 +63,7 @@ func _ready() -> void:
 
 
 func is_filled() -> bool:
-	return installed_part != null
+	return installed_parts.size() >= capacity
 
 
 ## Where an installed part's origin goes. A child Marker3D named SnapPoint sets
@@ -59,7 +74,7 @@ func snap_transform() -> Transform3D:
 
 ## True when this zone would install the part right now.
 func can_take(part: GrabbablePart) -> bool:
-	return not is_filled() and part.part_type == accepts and is_unlocked()
+	return not working and not is_filled() and part.part_type == accepts and is_unlocked()
 
 
 ## True once every prerequisite zone is filled.
@@ -78,12 +93,18 @@ func missing_prerequisites() -> Array[Area3D]:
 func judge(part: GrabbablePart) -> void:
 	if part.is_installed:
 		return
-	if can_take(part):
+	if working:
+		rejected.emit(self, part)
+	elif can_take(part):
+		var at := snap_transform() * Transform3D(Basis(), Vector3(stack_spacing * installed_parts.size(), 0, 0))
+		installed_parts.append(part)
 		installed_part = part
 		if pass_through:
-			part.move_home(snap_transform())
+			part.move_home(at)
 		else:
-			part.install(self, snap_transform())
+			part.install(self, at)
+		if is_filled() and has_node("Replaced"):
+			get_node("Replaced").visible = false
 		snapped.emit(self, part)
 	elif part.part_type != accepts:
 		rejected.emit(self, part)

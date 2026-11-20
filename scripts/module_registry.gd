@@ -124,20 +124,27 @@ func _read_slots(full_id: String, slots, part_types: Array) -> void:
 	var filled := {}
 	for path in slots:
 		var slot = slots[path]
-		if typeof(slot) != TYPE_DICTIONARY or not _is_id(slot.get("accepts")) \
+		var is_working: bool = typeof(slot) == TYPE_DICTIONARY and typeof(slot.get("working")) == TYPE_BOOL and slot.working
+		if typeof(slot) != TYPE_DICTIONARY or (not is_working and not _is_id(slot.get("accepts"))) \
 				or typeof(slot.get("name")) != TYPE_STRING or typeof(slot.get("hint")) != TYPE_STRING:
 			errors.append('%s: slot "%s" needs accepts, name and hint' % [full_id, path])
 			continue
+		if is_working:
+			continue  # a part that isn't broken: it takes nothing, so no part needs to fit
 		if not part_types.has(slot.accepts):
 			errors.append('%s: slot "%s" accepts "%s", but no part has that type' % [full_id, path, slot.accepts])
+		var capacity = slot.get("capacity", 1)
+		if not _is_whole(capacity, 1, 20):
+			errors.append('%s: slot "%s" capacity must be a whole number from 1 to 20' % [full_id, path])
+			capacity = 1
 		if not slot.get("pass_through", false):
-			filled[slot.accepts] = filled.get(slot.accepts, 0) + 1
+			filled[slot.accepts] = filled.get(slot.accepts, 0) + int(capacity)
 	_read_slot_options(full_id, slots)
 	# Every slot needs its own part, or the mission could never finish. A
 	# pass-through slot doesn't keep its part, so the part can fill several.
 	for type in filled:
 		if part_types.count(type) < filled[type]:
-			errors.append('%s: %d slots accept "%s" but only %d part(s) have that type' % [full_id, filled[type], type, part_types.count(type)])
+			errors.append('%s: slots need %d "%s" part(s) but only %d have that type' % [full_id, filled[type], type, part_types.count(type)])
 
 
 ## Optional slot fields: role (text), pass_through (true/false) and requires
@@ -149,8 +156,9 @@ func _read_slot_options(full_id: String, slots: Dictionary) -> void:
 			continue
 		if slot.has("role") and typeof(slot.role) != TYPE_STRING:
 			errors.append('%s: slot "%s" role must be text' % [full_id, path])
-		if slot.has("pass_through") and typeof(slot.pass_through) != TYPE_BOOL:
-			errors.append('%s: slot "%s" pass_through must be true or false' % [full_id, path])
+		for flag in ["pass_through", "working"]:
+			if slot.has(flag) and typeof(slot[flag]) != TYPE_BOOL:
+				errors.append('%s: slot "%s" %s must be true or false' % [full_id, path, flag])
 		var needs = slot.get("requires", [])
 		if typeof(needs) != TYPE_ARRAY:
 			errors.append('%s: slot "%s" requires must be a list of slot paths' % [full_id, path])
