@@ -1,0 +1,11 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/model_visual.gd" id="1_kmn3b"]
+[ext_resource type="PackedScene" path="res://models/monitor/monitor.glb" id="2_tj5m1"]
+
+[node name="MonitorVisual" type="Node3D" unique_id=455532370]
+script = ExtResource("1_kmn3b")
+hide_nodes = PackedStringArray()
+
+[node name="Sketchfab_Scene" type="Node3D" parent="." unique_id=2093678556 instance=ExtResource("2_tj5m1")]
+transform = Transform3D(0.96751213, 0, 0, 0, 0.96751213, 0, 0, 0, 0.96751213, 6.4104795e-05, 0.24701005, 0.031444885)

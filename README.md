@@ -54,7 +54,7 @@ The VR rules from the build plan, and where they show up:
 4. **UI on 3D panels.** The mission panel is a SubViewport drawn on a quad, tilted toward the player; part names are `Label3D`s. No `CanvasLayer` UI, since it doesn't show in the headset.
 5. **One input layer.** Parts and SnapZones only see `grab()` and `drop()`. A controller or hand grabber replaces `MouseGrabber` without touching the game.
 6. **No camera moving on its own.** The camera is placed once.
-7. **Model setup.** Each part is a body with logic and a simple collision shape, with its mesh as a child named `Mesh`, so a `.glb` model swaps in by replacing that child.
+7. **Model setup.** Each part is a body with logic and a simple collision shape, with its model as a child named `Mesh`. The real models live in `models/<part>/`; `tools/fit_models.gd` scales each to real size and writes `models/<part>/<part>_visual.tscn`, which the scenes use. Most models are CC BY 4.0, so **anyone who adds or swaps a model updates [CREDITS.md](CREDITS.md)**.
 8. **Origin at the snap point.** The RAM stick's origin is its bottom edge, and each SnapZone has a `SnapPoint` marker.
 
 ## Save scores to the backend

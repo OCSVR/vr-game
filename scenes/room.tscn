@@ -2,27 +2,45 @@
 
 [ext_resource type="Script" path="res://scripts/room.gd" id="1_room"]
 [ext_resource type="Script" path="res://scripts/input/mouse_grabber.gd" id="2_grabber"]
+[ext_resource type="PackedScene" path="res://models/desk/desk_visual.tscn" id="3_desk"]
+[ext_resource type="Texture2D" path="res://models/environment/poly_haven_studio_1k.hdr" id="4_hdri"]
+
+[sub_resource type="PanoramaSkyMaterial" id="SkyMat"]
+panorama = ExtResource("4_hdri")
+
+[sub_resource type="Sky" id="Sky_room"]
+sky_material = SubResource("SkyMat")
+radiance_size = 1
 
 [sub_resource type="Environment" id="Environment_room"]
-background_mode = 1
-background_color = Color(0.11, 0.12, 0.15, 1)
-ambient_light_source = 2
-ambient_light_color = Color(1, 1, 1, 1)
-ambient_light_energy = 0.45
+background_mode = 2
+sky = SubResource("Sky_room")
+ambient_light_source = 3
+ambient_light_energy = 0.7
+reflected_light_source = 2
+tonemap_mode = 2
+
+[sub_resource type="StandardMaterial3D" id="Mat_wall"]
+albedo_color = Color(0.78, 0.79, 0.76, 1)
+roughness = 0.95
+
+[sub_resource type="PlaneMesh" id="Mesh_wall"]
+material = SubResource("Mat_wall")
+size = Vector2(4, 2.8)
+orientation = 2
+
+[sub_resource type="PlaneMesh" id="Mesh_side_wall"]
+material = SubResource("Mat_wall")
+size = Vector2(4, 2.8)
+orientation = 0
 
 [sub_resource type="StandardMaterial3D" id="Mat_floor"]
-albedo_color = Color(0.32, 0.33, 0.36, 1)
+albedo_color = Color(0.36, 0.37, 0.4, 1)
+roughness = 0.9
 
 [sub_resource type="PlaneMesh" id="Mesh_floor"]
 material = SubResource("Mat_floor")
 size = Vector2(6, 6)
-
-[sub_resource type="StandardMaterial3D" id="Mat_table"]
-albedo_color = Color(0.55, 0.42, 0.3, 1)
-
-[sub_resource type="BoxMesh" id="Mesh_table"]
-material = SubResource("Mat_table")
-size = Vector3(1.2, 0.05, 0.7)
 
 [sub_resource type="BoxShape3D" id="Shape_table"]
 size = Vector3(1.2, 0.05, 0.7)
@@ -35,16 +53,35 @@ environment = SubResource("Environment_room")
 
 [node name="Sun" type="DirectionalLight3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 0.6428, 0.766, 0, -0.766, 0.6428, 0, 3, 0)
+light_color = Color(1, 0.97, 0.92, 1)
+light_energy = 0.7
 shadow_enabled = true
+
+[node name="CeilingLight" type="OmniLight3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 0.1)
+light_color = Color(1, 0.96, 0.9, 1)
+light_energy = 1.0
+omni_range = 4.5
+
+[node name="BackWall" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.4, -1.2)
+mesh = SubResource("Mesh_wall")
+
+[node name="LeftWall" type="MeshInstance3D" parent="."]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 1.4, 0.8)
+mesh = SubResource("Mesh_side_wall")
+
+[node name="RightWall" type="MeshInstance3D" parent="."]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 2, 1.4, 0.8)
+mesh = SubResource("Mesh_side_wall")
 
 [node name="Floor" type="MeshInstance3D" parent="."]
 mesh = SubResource("Mesh_floor")
 
+[node name="Desk" parent="." instance=ExtResource("3_desk")]
+
 [node name="Table" type="StaticBody3D" parent="."]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.875, 0)
-
-[node name="Mesh" type="MeshInstance3D" parent="Table"]
-mesh = SubResource("Mesh_table")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="Table"]
 shape = SubResource("Shape_table")

@@ -1,0 +1,10 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/model_visual.gd" id="1_hek4v"]
+[ext_resource type="PackedScene" path="res://models/board/board.glb" id="2_enmpc"]
+
+[node name="BoardVisual" type="Node3D" unique_id=785079296]
+script = ExtResource("1_hek4v")
+hide_nodes = PackedStringArray("Cube_027_MATb_0")
+
+[node name="Sketchfab_Scene" type="Node3D" parent="." unique_id=1981544640 instance=ExtResource("2_enmpc")]

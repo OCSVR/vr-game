@@ -1,0 +1,11 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/model_visual.gd" id="1_akjc5"]
+[ext_resource type="PackedScene" path="res://models/gpu/gpu.glb" id="2_a0qmd"]
+
+[node name="GpuVisual" type="Node3D" unique_id=883346573]
+script = ExtResource("1_akjc5")
+hide_nodes = PackedStringArray()
+
+[node name="Sketchfab_Scene" type="Node3D" parent="." unique_id=550487155 instance=ExtResource("2_a0qmd")]
+transform = Transform3D(-7.209189e-11, 0, 0.0016492702, 0, 0.0016492702, 0, -0.0016492702, 0, -7.209189e-11, -0.01758749, 0.016880779, 0.0018462837)

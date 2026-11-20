@@ -1,0 +1,11 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://scripts/model_visual.gd" id="1_dfjr0"]
+[ext_resource type="PackedScene" path="res://models/psu/psu.glb" id="2_xy5cs"]
+
+[node name="PsuVisual" type="Node3D" unique_id=202597467]
+script = ExtResource("1_dfjr0")
+hide_nodes = PackedStringArray()
+
+[node name="Sketchfab_Scene" type="Node3D" parent="." unique_id=1383837834 instance=ExtResource("2_xy5cs")]
+transform = Transform3D(0.037408113, 0, 0, 0, 0.037408113, 0, 0, 0, 0.037408113, -0.031894848, 0.043105148, 0.1152399)
